@@ -21,8 +21,8 @@
  * 
  * Author: William G. C. Oropesa
  * Institution: ICTP South American Institute for Fundamental Research
- * GitHub Repository: https://github.com/williamGOC/
- * Date: November 2025
+ * GitHub Repository: ....
+ * Date: ...
  * ============================================================================
  */
 
@@ -212,11 +212,19 @@ __host__ void getNeighborList(network *pN) {
     int threads = NUMBER_OF_THREADS_PER_BLOCK;
     int blocks  = (z * N + threads - 1) / threads;
 
-    // Launch device kernel
+    // ========================================================================
+    // Launch kernel to compute neighbor connectivity on GPU
+    // ========================================================================
     // Grid configuration: threads cover all N * z neighbor entries
+    // Each thread computes neighbors for one (site, direction) pair
     kerGetNeighborList<<<blocks, threads>>>(pN -> devPtrNeighbor, z, pN -> type);
 
+    // ========================================================================
+    // Error checking and synchronization
+    // ========================================================================
+    // Verify kernel launched without errors
     HANDLE_ERROR(cudaGetLastError());
+    // Wait for GPU to finish computation before host continues
     HANDLE_ERROR(cudaDeviceSynchronize());
 }
 
@@ -228,16 +236,23 @@ __host__ void getParticlesCoordinate(network *pN) {
     int dim = pN -> dim;
     int nParticles = pN -> nParticles;
 
-    // Displacement on eje Y for the points in each row
-    double y_offset = DIST * sqrt(3) / 2;   // Height of an equilateral triangle
+    // ========================================================================
+    // Compute physical coordinates based on lattice geometry
+    // ========================================================================
+    // Displacement on Y axis for the points in each row
+    // For triangular lattice: height of an equilateral triangle with side DIST
+    double y_offset = DIST * sqrt(3) / 2;
 
     switch(type) {
 
         case SQUARE_MOORE:
-
+            // ================================================================
+            // Square lattice: Simple rectangular grid coordinates
+            // ================================================================
+            // Position (i, j) maps to (DIST*i, DIST*j) in physical space
             for (int idx = 0; idx < nParticles; idx++) {
-                int i = pN -> index[idx] % LX;
-                int j = pN -> index[idx] / LX;
+                int i = pN -> index[idx] % LX;      // Column (x-coordinate)
+                int j = pN -> index[idx] / LX;      // Row (y-coordinate)
 
                 pN -> x[dim * idx + 0] = DIST * i;
                 pN -> x[dim * idx + 1] = DIST * j;
@@ -245,12 +260,18 @@ __host__ void getParticlesCoordinate(network *pN) {
         break;
 
         case TRIANGULAR:
-
+            // ================================================================
+            // Triangular lattice: Hexagonal close-packed coordinates
+            // ================================================================
+            // X offset alternates based on row number (j) for honeycomb pattern
+            // Y positions are vertically offset by triangular height
             for (int idx = 0; idx < nParticles; idx++) {
-                int i = pN -> index[idx] % LX;
-                int j = pN -> index[idx] / LX;
+                int i = pN -> index[idx] % LX;      // Column (x-coordinate)
+                int j = pN -> index[idx] / LX;      // Row (y-coordinate)
 
+                // X position: horizontal offset + half-spacing per row for odd rows
                 pN -> x[dim * idx + 0] = DIST * (i + 0.5 * j);
+                // Y position: vertical offset by triangular row height
                 pN -> x[dim * idx + 1] = j * y_offset;
             }
         break;
@@ -264,10 +285,17 @@ __host__ void setBonds(network *pN, const int value) {
     int threads = NUMBER_OF_THREADS_PER_BLOCK;
     int blocks  = (z * N + threads - 1) / threads;
 
-    // Launch device kernel
+    // ========================================================================
+    // Launch kernel to set all bonds to specified value
+    // ========================================================================
     // Grid configuration: threads cover all N*z bond entries
+    // Each thread sets one bond's value
     kerSetBonds<<<blocks, threads>>>(pN -> devPtrBond, z, value);
 
+    // ========================================================================
+    // Error checking (without synchronization)
+    // ========================================================================
+    // Verify kernel launched without errors
     HANDLE_ERROR(cudaGetLastError());
     // Note: No cudaDeviceSynchronize() here - kernel launches asynchronously
     // Add if synchronization is needed before next GPU operation
@@ -297,6 +325,7 @@ __host__ void putABPOnNetwork(network *pN) {
     // STEP 3: Fisher-Yates partial shuffle to select nParticles unique sites
     // ========================================================================
     // Only shuffle first nParticles positions for efficiency
+    // This generates random unique positions without replacement
     for (int i = 0; i < pN -> nParticles; i++) {
         // Pick a random index between i and N-1 (inclusive)
         // This ensures we select from unshuffled portion
@@ -315,7 +344,7 @@ __host__ void putABPOnNetwork(network *pN) {
         // Use the chosen index as particle position
         int idx = indices[i];
 
-        // Mark the site as occupied
+        // Mark the site as occupied (value = 1)
         pN -> site[idx] = 1;
 
         // Store particle position in index array
@@ -353,6 +382,7 @@ __host__ void initCurand(network *pN) {
     // ========================================================================
     // STEP 2: Calculate grid configuration for kernel launches
     // ========================================================================
+    // Determine number of blocks needed to cover all RNG states
     unsigned threads = NUMBER_OF_THREADS_PER_BLOCK;
     unsigned blocksBond = (totalBondStates + threads - 1) / threads;
     unsigned blocksSite = (totalSiteStates + threads - 1) / threads;
@@ -362,8 +392,10 @@ __host__ void initCurand(network *pN) {
     // ========================================================================
     // Each thread initializes one bond RNG state
     // Sequence number = thread index for independence
+    // All bond states use same seed for reproducibility
     setupCurandState<<<blocksBond, threads>>>(pN -> devPtrCurandStatesBond, totalBondStates, pN -> seed);
 
+    // Error checking and synchronization
     HANDLE_ERROR(cudaGetLastError());
     HANDLE_ERROR(cudaDeviceSynchronize());
 
@@ -371,14 +403,14 @@ __host__ void initCurand(network *pN) {
     // STEP 4: Initialize RNG states for sites/particles
     // ========================================================================
     // Each thread initializes one site/particle RNG state
-    // Different seed to avoid correlation with bond RNG
+    // Different seed (original + 1234) to avoid correlation with bond RNG
     // Offset of 1234 ensures independent random sequences
     setupCurandState<<<blocksSite, threads>>>(pN -> devPtrCurandStatesSite, totalSiteStates, pN -> seed + 1234UL);
 
+    // Error checking and synchronization
     HANDLE_ERROR(cudaGetLastError());
     HANDLE_ERROR(cudaDeviceSynchronize());
 }
-
 
 
 __host__ void destroyNetwork(network *pN) {
@@ -447,6 +479,7 @@ __host__ void mcStep(network *pN) {
     // STEP 1: Update particle positions and directions
     // ========================================================================
     // Particles attempt movement, change direction based on persistence
+    // One thread per particle for fully parallel updates
     
     int threadsParticles = NUMBER_OF_THREADS_PER_BLOCK;
     int blocksParticles = (nParticles + threadsParticles - 1) / threadsParticles;
@@ -468,6 +501,7 @@ __host__ void mcStep(network *pN) {
         pN -> devPtrCurandStatesSite
     );
 
+    // Error checking and synchronization
     HANDLE_ERROR(cudaGetLastError());
     HANDLE_ERROR(cudaDeviceSynchronize());
 
@@ -475,6 +509,7 @@ __host__ void mcStep(network *pN) {
     // STEP 2: Update bond states (regeneration)
     // ========================================================================
     // Broken bonds regenerate with probability P_REGEN
+    // One thread per bond directional pair for fully parallel updates
     
     int threadsBonds = NUMBER_OF_THREADS_PER_BLOCK;
     int blocksBonds = (N * z + threadsBonds - 1) / threadsBonds;
@@ -488,34 +523,24 @@ __host__ void mcStep(network *pN) {
         pN -> devPtrCurandStatesBond
     );
 
+    // Error checking and synchronization
     HANDLE_ERROR(cudaGetLastError());
     HANDLE_ERROR(cudaDeviceSynchronize());
 
     // ========================================================================
     // Increment iteration counter
     // ========================================================================
+    // Track total number of MC steps executed
     pN -> iter++;
 }
 
 
-
-__host__ void mcSteps(network *pN, int nSteps) {
-
-    for (int step = 0; step < nSteps; step++) {
-        
-        // Perform one MC step
-        mcStep(pN);
-
-        //TODO
-
-    }
-}
-
-
-
 __host__ void syncAndCopyToCPU(network *pN) {
 
-    // Ensure all GPU operations are complete
+    // ========================================================================
+    // Synchronize device and transfer simulation state to host
+    // ========================================================================
+    // Ensure all GPU operations are complete before copying
     HANDLE_ERROR(cudaDeviceSynchronize());
 
     // ========================================================================
@@ -531,7 +556,7 @@ __host__ void syncAndCopyToCPU(network *pN) {
     // Copy particle directions (which direction each particle faces)
     HANDLE_ERROR(cudaMemcpy(pN -> direction, pN -> devPtrDirection, pN -> memoryDirection, cudaMemcpyDeviceToHost));
 
-    // Copy bond on the lattice
+    // Copy bond status on the lattice
     HANDLE_ERROR(cudaMemcpy(pN -> bond, pN -> devPtrBond, pN -> memoryBond, cudaMemcpyDeviceToHost));
 }
 
@@ -541,10 +566,19 @@ __host__ void updateMSD(network *pN) {
     int nParticles = pN -> nParticles;
     int dim = pN -> dim;
 
-    // Número de bloques para lanzar el kernel
+    // ========================================================================
+    // STEP 1: Calculate grid configuration for kernel launch
+    // ========================================================================
+    // Determine number of blocks needed to cover all particles
+    // Each thread computes displacement for one particle
     unsigned threadsPerBlock = NUMBER_OF_THREADS_PER_BLOCK;
     unsigned nBlocks = (nParticles + threadsPerBlock - 1) / threadsPerBlock;
 
+    // ========================================================================
+    // STEP 2: Launch MSD computation kernel
+    // ========================================================================
+    // Compute partial MSD and MSD^2 sums within each block
+    // Uses parallel reduction in shared memory for efficiency
     computeMSDAndAlpha2<<<nBlocks, threadsPerBlock>>>(
         pN -> devPtrX, 
         pN -> devPtrX0,
@@ -553,19 +587,26 @@ __host__ void updateMSD(network *pN) {
         nParticles, dim
     );
 
-    // Check for kernel launch errors
+    // Error checking and synchronization
     HANDLE_ERROR(cudaGetLastError());
-
-    // Synchronize to ensure kernel completion
     HANDLE_ERROR(cudaDeviceSynchronize());
 
-    // Reservar memoria para resultados finales
+    // ========================================================================
+    // STEP 3: Allocate device memory for final results
+    // ========================================================================
+    // Temporary storage for finalized MSD, C4, and alpha2 values
     double *devPtrMSDResult, *devPtrC4Result, *devPtrAlpha2Result;
     HANDLE_ERROR(cudaMalloc(&devPtrMSDResult,    sizeof(double)));
     HANDLE_ERROR(cudaMalloc(&devPtrC4Result,     sizeof(double)));
     HANDLE_ERROR(cudaMalloc(&devPtrAlpha2Result, sizeof(double)));
 
-    // Ejecutar kernel finalizador que suma parciales y calcula alpha2
+    // ========================================================================
+    // STEP 4: Launch finalization kernel
+    // ========================================================================
+    // Sum partial results from all blocks and compute final statistics:
+    // - Mean MSD
+    // - Fourth cumulant C4
+    // - Non-Gaussian parameter alpha2
     finalizeMSDAndAlpha2<<<1,1>>>(
         pN -> devPtrPartialMSD,
         pN -> devPtrPartialMSD2,
@@ -576,19 +617,22 @@ __host__ void updateMSD(network *pN) {
         devPtrAlpha2Result
     );
     
-    // Check for kernel launch errors
+    // Error checking and synchronization
     HANDLE_ERROR(cudaGetLastError());
-
-    // Synchronize to ensure kernel completion
     HANDLE_ERROR(cudaDeviceSynchronize());
 
-    // Copy msd from device to host
+    // ========================================================================
+    // STEP 5: Copy results from device to host
+    // ========================================================================
+    // Transfer computed statistics to CPU for storage and analysis
     HANDLE_ERROR(cudaMemcpy(&pN -> msd,    devPtrMSDResult,    sizeof(double), cudaMemcpyDeviceToHost));
     HANDLE_ERROR(cudaMemcpy(&pN -> c4,     devPtrC4Result,     sizeof(double), cudaMemcpyDeviceToHost));
     HANDLE_ERROR(cudaMemcpy(&pN -> alpha2, devPtrAlpha2Result, sizeof(double), cudaMemcpyDeviceToHost));
 
-
-    // Liberar memoria device
+    // ========================================================================
+    // STEP 6: Free temporary device memory
+    // ========================================================================
+    // Release temporary result buffers
     HANDLE_ERROR(cudaFree(devPtrMSDResult));
     HANDLE_ERROR(cudaFree(devPtrC4Result));
     HANDLE_ERROR(cudaFree(devPtrAlpha2Result));
@@ -598,11 +642,18 @@ __host__ void updateMSD(network *pN) {
 
 __host__ void storeCoordinates(network *pN) {
 
-    // Dynamically compute number of blocks for particle "updateParticles" kernel
-    // and bonds "updateLinks" kernel
+    // ========================================================================
+    // STEP 1: Calculate grid configuration for kernel launch
+    // ========================================================================
+    // Determine number of blocks needed to cover all particles
+    // Each thread stores initial coordinates for one particle
     unsigned threadsPerBlock = NUMBER_OF_THREADS_PER_BLOCK;
     unsigned blocksForParticles = (pN -> nParticles + threadsPerBlock - 1) / threadsPerBlock;
 
+    // ========================================================================
+    // STEP 2: Launch kernel to save current coordinates as initial reference
+    // ========================================================================
+    // Copy current particle positions from x to x0 for displacement tracking
     getInitialCoordinates<<<blocksForParticles, threadsPerBlock>>>(
         pN -> devPtrX,
         pN -> devPtrX0,
@@ -610,9 +661,11 @@ __host__ void storeCoordinates(network *pN) {
         pN -> dim
     );
 
-    // Check for kernel launch errors
+    // ========================================================================
+    // Error checking and synchronization
+    // ========================================================================
+    // Verify kernel launched without errors
     HANDLE_ERROR(cudaGetLastError());
-
-    // Synchronize to ensure kernel completion
+    // Wait for GPU to finish storing coordinates before host continues
     HANDLE_ERROR(cudaDeviceSynchronize());
 }

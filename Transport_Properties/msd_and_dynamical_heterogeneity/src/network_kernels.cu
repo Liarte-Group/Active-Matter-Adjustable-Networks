@@ -336,7 +336,8 @@ __global__ void getMeanCoordinationNumber(const int *bond, const int z, double *
 // This kernel performs a two-stage approach: first calculates partial sums
 // within blocks using shared memory reduction, then final global averaging
 // is handled by finalizeMSDAndAlpha2 kernel
-__global__ void computeMSDAndAlpha2(const double *x, const double *x0, double *partialMSD, double *partialMSD2, int nParticles, int dim){
+__global__ void computeMSDAndAlpha2(const double *x, const double *x0, double *partialMSD, 
+    double *partialMSD2, int nParticles, int dim){
 
     // Shared memory arrays to hold partial sums within a block
     __shared__ double sDataMSD[NUMBER_OF_THREADS_PER_BLOCK];
