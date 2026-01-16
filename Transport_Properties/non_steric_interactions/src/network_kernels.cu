@@ -18,8 +18,8 @@
  * 
  * Author: William G. C. Oropesa 
  * Institution: ICTP South American Institute for Fundamental Research
- * GitHub Repository: https://github.com/williamGOC/
- * Date: November 2025
+ * GitHub Repository: ....
+ * Date: ....
  * ============================================================================
  */
 
@@ -116,7 +116,6 @@ __global__ void kerGetNeighborList(int *neighbor, const int z, LatticeType type)
 
 
 
-
 __global__ void kerSetBonds(int *bond, const int z, const int value) {
     
     // Compute global thread index
@@ -139,6 +138,7 @@ __global__ void kerSetBonds(int *bond, const int z, const int value) {
     //   value = 0: Bond is broken/removed (block particle movement)
     bond[idx] = value;
 }
+
 
 
 __global__ void updateParticles(int *site, int *neighbor, int *bond, int *index, int *direction, double *x, 
@@ -183,37 +183,28 @@ __global__ void updateParticles(int *site, int *neighbor, int *bond, int *index,
     int validBond = bond[z * oldIdx + dir];
 
     if (validBond) {
-        // Try to occupy the new site atomically
-        // atomicCAS: Compare-And-Swap
-        //   if site[newIdx] == expected (0), set it to 1 and return 0
-        //   otherwise, return current value (collision!)
-        // int expected = 0;
-        //if (atomicCAS(&site[newIdx], expected, 1) == 0) {
-            // Movement successful: free old site and update particle's index
-            atomicSub(&site[oldIdx], 1);
-            atomicAdd(&site[newIdx], 1);
+        // Movement successful: free old site and update particle's index
+        atomicSub(&site[oldIdx], 1);
+        atomicAdd(&site[newIdx], 1);
         
-            index[idx] = newIdx;
+        index[idx] = newIdx;
 
-            x[dim * idx + 0] += shift0[dir];
-            x[dim * idx + 1] += shift1[dir];
+        x[dim * idx + 0] += shift0[dir];
+        x[dim * idx + 1] += shift1[dir];
 
-            // ================================================================
-            // BOND DEACTIVATION: Remove bidirectional bond after use
-            // ================================================================
-            // Deactivate used bond in both directions to prevent simultaneous use
-            // Opposite direction: (dir + z/2) % z (pointing back from newIdx to oldIdx)
-            // This maintains consistency: forward/backward bond pair are always equal
-            atomicExch(&bond[z * oldIdx + dir], 0);
-            atomicExch(&bond[z * newIdx + (dir + z / 2) % z], 0);
-        //}
-        // If atomicCAS fails, another particle beat us to the site → nothing happens
+        // ================================================================
+        // BOND DEACTIVATION: Remove bidirectional bond after use
+        // ================================================================
+        // Deactivate used bond in both directions to prevent simultaneous use
+        // Opposite direction: (dir + z/2) % z (pointing back from newIdx to oldIdx)
+        // This maintains consistency: forward/backward bond pair are always equal
+        atomicExch(&bond[z * oldIdx + dir], 0);
+        atomicExch(&bond[z * newIdx + (dir + z / 2) % z], 0);
     }
 
     // Save updated RNG state
     states[idx] = localState;
 }
-
 
 
 __global__ void updateBonds(int *bond, int *neighbor, int z, curandState *bondStates) {
@@ -277,7 +268,6 @@ __global__ void updateBonds(int *bond, int *neighbor, int z, curandState *bondSt
 }
 
 
-
 __global__ void getMeanCoordinationNumber(const int *bond, const int z, double *zMean) {
 
     // Declare dynamic shared memory (allocated at kernel launch)
@@ -333,9 +323,14 @@ __global__ void getMeanCoordinationNumber(const int *bond, const int z, double *
 }
 
 
-// COMMENT TODO 
-
-__global__ void computeMSDAndAlpha2(const double *x, const double *x0, double *partialMSD, double *partialMSD2, int nParticles, int dim){
+// ============================================================================
+// Kernel to compute mean squared displacement (MSD) and its square (MSD^2)
+// ============================================================================
+// This kernel performs a two-stage approach: first calculates partial sums
+// within blocks using shared memory reduction, then final global averaging
+// is handled by finalizeMSDAndAlpha2 kernel
+__global__ void computeMSDAndAlpha2(const double *x, const double *x0, double *partialMSD, 
+    double *partialMSD2, int nParticles, int dim){
 
     // Shared memory arrays to hold partial sums within a block
     __shared__ double sDataMSD[NUMBER_OF_THREADS_PER_BLOCK];
@@ -351,35 +346,50 @@ __global__ void computeMSDAndAlpha2(const double *x, const double *x0, double *p
     double msd  = 0.0;
     double msd2 = 0.0;
 
-    // Calculate squared displacement and its square for assigned particle
+    // ========================================================================
+    // STEP 1: Calculate squared displacement for each particle
+    // ========================================================================
+    // For particles within bounds, compute displacement from initial position
+    // and store both the displacement and its square for later statistics
     if (idx < nParticles) {
 
-        // Cálculo de la distancia cuadrada para cada partícula
+        // Calculate displacement components (x and y directions)
+        // Difference between current position and initial position for particle idx
         double dx = x[dim * idx + 0] - x0[dim * idx + 0];
         double dy = x[dim * idx + 1] - x0[dim * idx + 1];
 
-        // squared displacement
+        // Squared displacement (r^2) from initial position
         double dr2 = dx * dx + dy * dy;
 
         msd  = dr2;         // MSD contribution from this particle
-        msd2 = dr2 * dr2;   // MSD squared contribution
+        msd2 = dr2 * dr2;   // MSD squared contribution (needed for fourth moment)
     }
 
+    // Copy computed values to shared memory for reduction
     sDataMSD[tid]  = msd;
     sDataMSD2[tid] = msd2;
 
-    __syncthreads();
+    __syncthreads();  // Synchronize: all threads must have written before reduction starts
 
-    // Perform parallel reduction within the block to sum MSD and MSD^2
+    // ========================================================================
+    // STEP 2: Parallel reduction within the block (binary tree pattern)
+    // ========================================================================
+    // Sum MSD and MSD^2 across all threads in the block using shared memory
+    // This reduces from blockDim.x values to 1 (in sData[0])
     for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
         if (tid < s) {
+            // Each thread tid adds values from thread tid+s, progressively doubling stride
             sDataMSD[tid]  += sDataMSD[tid + s];
             sDataMSD2[tid] += sDataMSD2[tid + s];
         }
-        __syncthreads();
+        __syncthreads();  // Synchronize after each reduction level
     }
     
-    // Write the block's partial sum result to global memory
+    // ========================================================================
+    // STEP 3: Write block's partial sum results to global memory
+    // ========================================================================
+    // After reduction, only thread 0 has correct block sums in sData[0]
+    // Write these to global arrays for later finalization across all blocks
     if (tid == 0) {
         partialMSD[blockIdx.x]  = sDataMSD[0];
         partialMSD2[blockIdx.x] = sDataMSD2[0];
@@ -387,11 +397,19 @@ __global__ void computeMSDAndAlpha2(const double *x, const double *x0, double *p
 }
 
 
-// Kernel to finalize MSD and alpha2 calculations by summing partial results and computing final values
+// ============================================================================
+// Kernel to finalize MSD, C4, and non-Gaussian parameter (alpha2) calculations
+// ============================================================================
+// This kernel aggregates partial results from all blocks and computes final
+// statistics: average MSD, fourth cumulant C4, and alpha2 parameter
 __global__ void finalizeMSDAndAlpha2(double *partialMSD, double *partialMSD2, int nBlocks, 
     int nParticles, double *msdResult, double *c4Result, double *alpha2Result)
 {
-    // Accumulate the partial sums from each block
+    // ========================================================================
+    // STEP 1: Accumulate partial sums from each block
+    // ========================================================================
+    // Sum contributions from all GPU blocks computed in previous kernel
+    // This serializes the final summation but only requires minimal computation
     double totalMSD = 0.0;
     double totalMSD2 = 0.0;
 
@@ -400,18 +418,32 @@ __global__ void finalizeMSDAndAlpha2(double *partialMSD, double *partialMSD2, in
         totalMSD2 += partialMSD2[i];
     }
 
-    // Compute the average MSD and average MSD squared
+    // ========================================================================
+    // STEP 2: Compute average MSD and average MSD squared per particle
+    // ========================================================================
+    // Normalize by number of particles to get mean values
     double meanMSD  = totalMSD / nParticles;
     double meanMSD2 = totalMSD2 / nParticles;
 
-    // Store the average MSD result
+    // ========================================================================
+    // STEP 3: Store results to global memory
+    // ========================================================================
+    // Output the mean squared displacement
     *msdResult = meanMSD;
 
-    // Store the C4
+    // ========================================================================
+    // STEP 4: Calculate C4 (fourth cumulant)
+    // ========================================================================
+    // C4 = <(Δr^2)^2> - <Δr^2>^2 = <Δr^4> - <Δr^2>^2
+    // This measures deviation from Gaussian displacement distribution
     *c4Result = meanMSD2 - meanMSD * meanMSD;
 
-    // Calculate the non-Gaussian parameter alpha2 using the formula:
-    // alpha2 = (d/(d+2)) * ( <Δr^4> / <Δr^2>^2 ) - 1
+    // ========================================================================
+    // STEP 5: Calculate non-Gaussian parameter alpha2
+    // ========================================================================
+    // Formula for d=2 dimensions: alpha2 = (d/(d+2)) * (<Δr^4> / <Δr^2>^2) - 1
+    // Simplified for d=2: alpha2 = (1/2) * (<Δr^4> / <Δr^2>^2) - 1
+    // alpha2 = 0 for Gaussian distribution, positive for non-Gaussian behavior
     *alpha2Result = (1.0 / 2.0) * (meanMSD2 / (meanMSD * meanMSD)) - 1.0;
 }
 
@@ -422,9 +454,17 @@ __global__ void getInitialCoordinates(double *x, double *x0, int nParticles, int
     // Compute global thread index
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-    // Return if thread does not correspond to a valid particle
+    // ========================================================================
+    // Boundary check: Exit if thread does not correspond to a valid particle
+    // ========================================================================
+    // Only threads with valid particle indices (0 to nParticles-1) proceed
     if (idx >= nParticles) return;
 
+    // ========================================================================
+    // Store current position as initial reference point
+    // ========================================================================
+    // Copy x and y coordinates from x array to x0 array for particle idx
+    // This snapshot captures the starting position before dynamics begin
     x0[dim * idx + 0] = x[dim * idx + 0];
     x0[dim * idx + 1] = x[dim * idx + 1];
 }
