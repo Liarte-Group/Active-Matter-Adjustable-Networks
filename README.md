@@ -25,3 +25,13 @@ The repository is organized around **article-specific directories**, each contai
 │       └── network.h             # Network data structures and function declarations
 
 ```
+
+## Authors
+
+- William G. C. Oropesa
+
+## Acknowledgements
+
+The author gratefully acknowledges Prof. Danilo B. Liarte for valuable scientific discussions and conceptual contributions that significantly influenced the design of this code.
+
+The author also thanks Prof. André P. Vieira for providing continuous access to GPU cluster resources essential for the development and testing of this software.
