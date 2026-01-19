@@ -41,6 +41,8 @@ Each study directory follows the same internal structure:
 ```
 Detailed instructions and model-specific descriptions are provided in the corresponding local ```README.md``` files.
 
+---
+
 ## Requirements
 
 ### Hardware
@@ -72,6 +74,7 @@ Detailed instructions and model-specific descriptions are provided in the corres
 - The code is written in **CUDA-C** and does not rely on external C++ libraries.
 - Job submission scripts (`submit.sh`) are provided as templates and may require minor adaptation depending on the local system configuration.
 
+---
 
 ## Authors and Contributions
 This repository is developed and maintained by the **Liarte-Group**, an open and growing research group focused on computational and theoretical studies of active and soft matter systems.
@@ -88,12 +91,16 @@ Provided key scientific ideas and conceptual guidance that strongly influenced t
 ### Computational Support
 - André P. Vieira
   Provided continuous access to GPU cluster resources essential for the development, testing, and large-scale execution of the simulations.
-  
+
+---
+
 ## Acknowledgements
 
 The author gratefully acknowledges **Prof. Danilo B. Liarte** for valuable scientific discussions and conceptual contributions that significantly influenced the design of this code.
 
 The author also thanks **Prof. André P. Vieira** for providing continuous access to GPU cluster resources essential for the development and testing of this software.
+
+---
 
 ## License
 This project is distributed under the terms specified in the ```LICENSE``` file.
