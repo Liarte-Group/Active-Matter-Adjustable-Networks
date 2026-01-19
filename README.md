@@ -93,7 +93,7 @@ Provided key scientific ideas and conceptual guidance that strongly influenced t
 ### Computational Support
 - André P. Vieira
 
-  Provided continuous access to GPU cluster resources essential for the development, testing, and large-scale execution of the simulations.
+Provided continuous access to GPU cluster resources essential for the development, testing, and large-scale execution of the simulations.
 
 ---
 
