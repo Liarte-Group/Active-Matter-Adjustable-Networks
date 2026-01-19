@@ -1,3 +1,5 @@
+#ifndef __NETWORK_H__
+#define __NETWORK_H__
 /**
  * ============================================================================
  * Header File: Network Data Structure and Lattice Management
@@ -7,7 +9,6 @@
  * for managing lattices with active Brownian particles (ABPs). It provides:
  *   - Network topology representation (neighbors, bonds, sites)
  *   - Particle management (positions, directions, occupancy)
- *   - Elastic deformation support (displacements, forces)
  *   - Random number generation (cuRAND integration)
  *   - Lattice geometry (coordinates, boundaries)
  * 
@@ -15,7 +16,6 @@
  *   - Support for multiple lattice types (square Moore, triangular)
  *   - Dual host/device memory management
  *   - Integrated particle and bond dynamics
- *   - Elasticity computation support
  *   - Thread-safe random number generation
  * 
  * Workflow:
@@ -24,18 +24,15 @@
  *   3. Place particles: putABPOnNetwork()
  *   4. Set RNG: initCurand()
  *   5. Simulate: mcSteps(net, nSteps) in a loop
- *   6. Analyze: getEnergy(), getForceVector(), etc. (from elasticity module)
- *   7. Clean up: destroyNetwork()
+ *   6. Clean up: destroyNetwork()
  * 
  * Author: William G. C. Oropesa
  * Institution: ICTP South American Institute for Fundamental Research
- * GitHub Repository: https://github.com/williamGOC/
- * Date: November 2025
+ * GitHub Repository: TODO
+ * Date: TODO
  * ============================================================================
  */
 
-#ifndef __NETWORK_H__
-#define __NETWORK_H__
 
 #include "config.h"
 
@@ -57,13 +54,13 @@
  *     
  *     Neighbor arrangement (for site i at position (x,y)):
  *       
- *           NW   N   NE
- *            \   |   /
+ *          NW   N   NE
+ *            \  |  /
  *             \ | /
- *          W - i - E
+ *         w --- i --- E
  *             / | \
  *            /  |  \
- *           SW   S   SE
+ *          SW   S   SE
  *     
  *     Direction indices: 0=E, 1=NE, 2=N, 3=NW, 4=W, 5=SW, 6=S, 7=SE
  *     
@@ -85,19 +82,19 @@
  *     
  *     Neighbor arrangement (hexagonal pattern):
  *       
- *           NW    N    NE
- *            \    |    /
- *             \   |   /
- *            W -- i -- E
- *             /   |   \
- *            /    |    \
- *           SW    S    SE
+ *             NW     NE
+ *              \     /
+ *               \   /
+ *           W --- i --- E
+ *               /   \
+ *              /     \
+ *            SW      SE
  *     
  *     Direction indices: 0=E, 1=NE, 2=NW, 3=W, 4=SW, 5=SE
  *     
  *     Staggered rows: Even and odd rows offset for hexagonal packing
  *     Vertical spacing: DIST * sqrt(3) / 2 (optimal packing)
- *     Horizontal offset: Every other row shifted by 0.5 * DIST
+ *     Horizontal offset: Every other row shifted by DIST / 2
  *     
  *     Physical properties:
  *       - Highest packing density (hexagonal close packing)
@@ -111,15 +108,6 @@
  *       - Study optimal packing effects
  *       - Compare with experimental results
  *       - Colloidal particle simulations
- * 
- * Geometric interpretation:
- *   - SQUARE_MOORE: Infinite norm (max of |Δx|, |Δy|) ≤ 1
- *   - TRIANGULAR: Optimal space-filling arrangement
- * 
- * Elastic properties affected by lattice type:
- *   - Different coordination → different stiffness
- *   - Isotropy properties differ
- *   - Anisotropy patterns specific to each lattice
  * 
  * Selection guidelines:
  *   Use SQUARE_MOORE for:
@@ -193,16 +181,6 @@ typedef enum {
  *     Purpose: Track bond state allocation
  *     Use: Memory management
  *   
- *   size_t memoryProjector
- *     Size: z * 3 * sizeof(double) bytes (for 3 matrices: P_00, P_01, P_11)
- *     Purpose: Track projector matrix allocation
- *     Use: Memory management
- *   
- *   size_t memoryCGvector
- *     Size: N * dim * sizeof(double) bytes
- *     Purpose: Track size for CG solver vectors
- *     Use: CG workspace allocation, vector operations
- *   
  *   size_t memoryCurandStatesBond
  *     Size: N * z * sizeof(curandState) bytes
  *     Purpose: Track RNG state allocation for bonds
@@ -245,12 +223,6 @@ typedef enum {
  *     Update: Via syncAndCopyToCPU() from devPtrBond
  *     Use: Bond statistics, network connectivity analysis
  *   
- *   double *proj_00, *proj_01, *proj_11
- *     Size: z doubles each (one per direction)
- *     Purpose: Projection matrix components for elasticity
- *     Access: CPU direct read/write
- *     Update: Via getProjector() kernel call
- *     Use: Elasticity computations, verification
  * 
  *   ═══════════════════════════════════════════════════════════════════
  *   DEVICE MEMORY ARRAYS (GPU side, fast, kernel-accessible only)
@@ -303,50 +275,6 @@ typedef enum {
  *     Update: updateParticles removes bonds; updateBonds regenerates
  *     Use: Stochastic bond dynamics, network connectivity
  *   
- *   ELASTICITY ARRAYS:
- *   
- *   double *devPtrX
- *     Size: N*dim doubles
- *     Purpose: Lattice site coordinates (x, y positions)
- *     Layout: x[dim*i + comp] = coordinate component at site i
- *     Access: GPU kernels read (rarely written)
- *     Update: getNetworkCoordinate kernel sets, then constant
- *     Use: Elasticity calculations, energy, projectors
- *   
- *   double *devPtrU
- *     Size: N*dim doubles
- *     Purpose: Affine strain displacement field
- *     Layout: u[dim*i + comp] = displacement component
- *     Access: GPU kernels read/write
- *     Update: applyStrainX, applyBulk, applyPureShear kernels
- *     Use: Applied boundary conditions for elasticity
- *   
- *   double *devPtrDU
- *     Size: N*dim doubles
- *     Purpose: Incremental displacement (solution from CG solver)
- *     Layout: du[dim*i + comp] = displacement increment
- *     Access: GPU kernels read/write
- *     Update: conjugateGradient solver fills this
- *     Use: Equilibrium deformation, energy calculation
- *   
- *   double *devPtrB
- *     Size: N*dim doubles
- *     Purpose: Force vector (RHS of linear system A*du = b)
- *     Layout: b[dim*i + comp] = force component
- *     Access: GPU kernels read/write
- *     Update: kerForceVector kernel computes
- *     Use: CG solver RHS, equilibrium driving forces
- *   
- *   PROJECTOR MATRICES:
- *   
- *   double *devPtrProj_00, *devPtrProj_01, *devPtrProj_11
- *     Size: z doubles each (one per direction)
- *     Purpose: Components of projection matrix P_ij for each direction
- *     Layout: One set per direction (indexed by dir)
- *     Access: GPU kernels read (not modified)
- *     Update: getProjector kernel computes
- *     Use: Energy/force calculations, bond extension projection
- * 
  *   ═══════════════════════════════════════════════════════════════════
  *   LATTICE AND SIMULATION PARAMETERS
  *   ═══════════════════════════════════════════════════════════════════
@@ -425,12 +353,11 @@ typedef enum {
  *     Particle/occupancy: 4*N (site) + 4*nParticles (index, direction) ≈ 8*N bytes
  *     Topology: 4*N (boundary) + 4*6*N (neighbor) + 4*6*N (bond) = 52*N bytes
  *     Elasticity: 8*2*N (u, du, b) + 8*2*N (x: coordinates) = 32*N bytes
- *     Projectors: 8*3*6 = 144 bytes (negligible)
  *     RNG: sizeof(curandState)*7*N ≈ 56*N bytes (large!)
  *     Total: ~148*N bytes (dominated by RNG)
  *   
  *   For N = 100,000:
- *     Total ≈ 15 MB (fits easily on modern GPUs with GBs)
+ *     Total ≈ TODO MB (fits easily on modern GPUs with GBs)
  * 
  * Thread safety:
  *   - Host arrays: Single-threaded access only
@@ -446,55 +373,77 @@ typedef struct {
     // Used for allocation/deallocation of GPU memory
     
     size_t memorySite;                 // Size of site array
+    size_t memoryPartX;                // size of particles position
     size_t memoryIndex;                // Size of particle index array
+    size_t memoryShift;                // Size of particles steps on lattice
     size_t memoryDirection;            // Size of particle direction array
     size_t memoryNeighbor;             // Size of neighbor list
     size_t memoryBond;                 // Size of bond array
     size_t memoryCurandStatesBond;     // Size of bond RNG states
     size_t memoryCurandStatesSite;     // Size of site RNG states
+    size_t memoryMSD;                  // Size of auxiliar vector for msd calculations
 
     // ========================================================================
     // HOST MEMORY ARRAYS (CPU side)
     // ========================================================================
     // These are CPU copies of device data, updated via syncAndCopyToCPU()
     
-    int *site;                 // Host copy: occupancy state
-    int *index;                // Host copy: particle indices
-    int *direction;            // Host copy: particle directions
-    int *bond;                 // Host copy: bond states
+    int *site;                         // Host copy: occupancy state
+    int *index;                        // Host copy: particle indices
+    int *direction;                    // Host copy: particle directions
+    int *bond;                         // Host copy: bond states
+
+    double *x;                         // Host copy: particle positions
+    double *x0;                        // Host copy: initial particle positions
+
+    double *shiftDir0;                 // Host copy: horizontal lattice shifts
+    double *shiftDir1;                 // Host copy: vertical lattice shifts
 
     // ========================================================================
     // DEVICE MEMORY ARRAYS (GPU side)
     // ========================================================================
     // Fast GPU memory, accessible only via kernels
     
-    int *devPtrSite;           // Occupancy: 1=occupied, 0=empty
-    int *devPtrIndex;          // Maps particle ID → site index
-    int *devPtrDirection;      // Particle direction (0 to z-1)
-    int *devPtrNeighbor;       // Neighbor list: neighbor[z*i + dir]
-    int *devPtrBond;           // Bond state: 1=active, 0=broken
+    int *devPtrSite;                   // Occupancy: 1=occupied, 0=empty
+    int *devPtrIndex;                  // Maps particle ID → site index
+    int *devPtrDirection;              // Particle direction (0 to z-1)
+    int *devPtrNeighbor;               // Neighbor list: neighbor[z*i + dir]
+    int *devPtrBond;                   // Bond state: 1=active, 0=broken
+
+    double *devPtrX;                   // Particle positions
+    double *devPtrX0;                  // Initial particle positions
+
+    double *devPtrShiftDir0;           // Horizontal lattice shifts
+    double *devPtrShiftDir1;           // Vertical lattice shifts
+
     // ========================================================================
     // LATTICE AND SIMULATION PROPERTIES
     // ========================================================================
     // Structural and dynamical parameters
     
-    int z;                     // Coordination number (neighbors per site: 8 or 6)
-    int dim;                   // Spatial dimension (typically 2 for 2D)
-    int iter;                  // Iteration counter for simulation progress
-    unsigned long seed;        // RNG seed value for reproducible simulations
-    double pack;               // Packing fraction of ABPs (0.0 to 1.0)
-    double pPerst;             // Persistence probability (particle direction)
-    double pRegen;             // Bond regeneration probability
-    int nParticles;            // Total number of ABPs on network
-    LatticeType type;          // Type of lattice (enum: SQUARE_MOORE or TRIANGULAR)
+    int z;                             // Coordination number (neighbors per site: 8 or 6)
+    int dim;                           // Spatial dimension (typically 2 for 2D)
+    int iter;                          // Iteration counter for simulation progress
+    unsigned long seed;                // RNG seed value for reproducible simulations
+    double pack;                       // Packing fraction of ABPs (0.0 to 1.0)
+    double pPerst;                     // Persistence probability
+    double pRegen;                     // Bond regeneration probability
+    int nParticles;                    // Total number of ABPs on network
+    LatticeType type;                  // Type of lattice (enum: SQUARE_MOORE or TRIANGULAR)
 
+    double msd;                        // Mean square displacement
+    double c4;                         // Dinamical heterogeneity
+    double alpha2;                     // non-Gaussianity parameter
+
+    double *devPtrPartialMSD;          // Auxiliar vector to compute msd
+    double *devPtrPartialMSD2;         // Auxiliar vector to compute c4
 
     // ========================================================================
     // DEVICE RNG STATES (CURAND library)
     // ========================================================================
     // Thread-safe independent random number generation
     
-    curandState *devPtrCurandStatesBond;  // One RNG state per bond (for regeneration)
+    curandState *devPtrCurandStatesBond;  // One RNG state per bond (for regeneration process)
     curandState *devPtrCurandStatesSite;  // One RNG state per site (for particle dynamics)
 
 } network;
@@ -579,11 +528,39 @@ __host__ network *makeNetwork(LatticeType, const int, const double, const double
  */
 __host__ void destroyNetwork(network *);
 
+
+
 /**
  * ============================================================================
  * HOST FUNCTION DECLARATIONS - Lattice Geometry Initialization
  * ============================================================================
  */
+
+
+/**
+ * Copy lattice-specific shift vectors from host to memory
+ * 
+ * Initializes shift vectors (horizontal and vertical displacement per direction)
+ * based on lattice type. These define how particles move on the lattice.
+ * 
+ * Operations:
+ *   - Copies lattice-specific constants to host memory
+ *   - Shift vectors define connectivity geometry
+ *   - Different lattices have different shift patterns
+ * 
+ * Parameters:
+ *   pN - pointer to network
+ * 
+ * Output:
+ *   pN -> shiftDir0: horizontal shift per direction
+ *   pN -> shiftDir1: vertical shift per direction
+ * 
+ * See also:
+ *   - getParticlesCoordinate(): Uses shifts for position calculation
+ *   - makeNetwork(): Calls during initialization
+ */
+__host__ void getShift(network *);
+
 
 /**
  * Build neighbor connectivity list
@@ -594,7 +571,7 @@ __host__ void destroyNetwork(network *);
  * Calls kerGetNeighborList CUDA kernel
  * 
  * Output:
- *   pN->devPtrNeighbor[z*i + dir] = index of neighbor at site i, direction dir
+ *   pN -> devPtrNeighbor[z*i + dir] = index of neighbor at site i, direction dir
  * 
  * Properties:
  *   - Periodic boundary conditions (toroidal topology)
@@ -603,35 +580,77 @@ __host__ void destroyNetwork(network *);
  * 
  * See also:
  *   - kerGetNeighborList: Device kernel
- *   - getBoundary(): Identify actual boundary sites
  */
 __host__ void getNeighborList(network *);
 
+
 /**
- * Identify boundary sites
+ * Calculate physical coordinates of particles on lattice sites
  * 
- * Marks which lattice sites are at the edges (boundary).
- * Boundary sites often have special treatment (fixed displacements, etc).
+ * Computes (x, y) Cartesian coordinates for each site based on lattice type.
+ * Different lattices have different geometric arrangements.
  * Called during makeNetwork() initialization.
  * 
- * Calls kerGetBoundary CUDA kernel
+ * Calls kerGetNetworkCoordinate CUDA kernel
  * 
  * Output:
- *   pN->devPtrBoundary[i] = 1 if site i is boundary, 0 if interior
+ *   pN->devPtrX[dim*i + comp] = coordinate component for site i
  * 
- * Boundary definition (for 2D LX×LX lattice):
- *   Boundary: row ∈ {0, LX-1} OR col ∈ {0, LX-1}
- *   Interior: 1 ≤ row, col ≤ LX-2
+ * Coordinate systems:
+ *   SQUARE_MOORE: x[i] = DIST * col, y[i] = DIST * row
+ *   TRIANGULAR: x[i] = DIST * (col + 0.5*row), y[i] = row * DIST * sqrt(3)/2
  * 
- * Physical use:
- *   - Apply boundary conditions for elasticity
- *   - Exclude surface particles from dynamics
- *   - Identify defects or special sites
+ * Physical interpretation:
+ *   - Used in elasticity calculations
+ *   - Defines metric (distances between sites)
+ *   - Determines bond direction for projection matrices
  * 
  * See also:
- *   - kerGetBoundary: Device kernel
+ *   - kerGetNetworkCoordinate: Device kernel
+ *   - getProjector(): Uses coordinates to compute projectors
  */
+__host__ void getParticlesCoordinate(network *);
 
+
+
+/**
+ * Place active Brownian particles randomly on lattice sites
+ * 
+ * Uses Fisher-Yates shuffle algorithm to select random unique sites
+ * and assigns random initial directions to each particle.
+ * Called during makeNetwork() initialization.
+ * 
+ * Operations:
+ *   1. Initialize all sites as empty (site[i] = 0)
+ *   2. Create array of all site indices [0, N-1]
+ *   3. Partial Fisher-Yates shuffle to select nParticles unique sites
+ *   4. For each selected site:
+ *      - Mark site as occupied (site[i] = 1)
+ *      - Store particle position (index[p] = site_i)
+ *      - Assign random direction (direction[p] = rand() % z)
+ *   5. Free temporary indices array
+ * 
+ * Parameters:
+ *   pN - pointer to network
+ * 
+ * Output:
+ *   pN -> site[i]: 1 if site occupied, 0 if empty
+ *   pN -> index[p]: which lattice site particle p occupies
+ *   pN -> direction[p]: initial direction [0, z-1] for particle p
+ * 
+ * Properties:
+ *   - No two particles on same site (guaranteed unique positions)
+ *   - Uniform random placement (each site equally likely)
+ *   - Random initial directions (isotropic distribution)
+ *   - Executed on CPU (RNG convenience, small memory overhead)
+ * 
+ * Complexity:
+ *   - Time: O(nParticles) with Fisher-Yates shuffle
+ *   - Space: O(N) temporary array
+ * 
+ * See also:
+ *   - makeNetwork(): Calls during initialization
+ */
 __host__ void putABPOnNetwork(network *);
 
 /**
@@ -647,7 +666,8 @@ __host__ void putABPOnNetwork(network *);
  *   value - state value to assign (typically 1 for active, 0 for broken)
  * 
  * Output:
- *   pN->devPtrBond[z*i + dir] = value for all i, dir
+ *   pN -> devPtrBond[z*i + dir] = value of the bond originating at site i
+ *                                 and pointing in direction dir
  * 
  * Common initialization:
  *   setBonds(net, 1)  // All bonds active initially
@@ -715,34 +735,6 @@ __host__ void initCurand(network *);
  *   - updateBonds: Device kernel
  */
 __host__ void mcStep(network *);
-
-/**
- * Execute multiple Monte Carlo steps
- * 
- * Repeatedly calls mcStep() for nSteps iterations.
- * Main simulation loop driver.
- * 
- * Parameters:
- *   pN - pointer to network
- *   nSteps - number of MC steps to execute
- * 
- * Typical usage:
- *   
- *   // Run 10,000 MC steps
- *   mcSteps(net, 10000);
- *   
- *   // Equilibrate, then measure
- *   mcSteps(net, 100000);  // Equilibration
- *   double energy = getEnergy(net, devEnergy);  // Measurement
- * 
- * Performance:
- *   - Each step: ~milliseconds (kernel launches + GPU computation)
- *   - 10,000 steps: ~10 seconds (typical for moderate network size)
- * 
- * See also:
- *   - mcStep(): Single step
- */
-__host__ void mcSteps(network *, int);
 
 
 /**
@@ -866,6 +858,7 @@ __global__ void setupCurandState(curandState *, const int, unsigned long);
  * 
  * Calls in: mcStep()
  */
+
 __global__ void updateParticles(int *, int *, int *, int *, int *, int, int, int, curandState *);
 
 /**
@@ -891,40 +884,99 @@ __global__ void updateParticles(int *, int *, int *, int *, int *, int, int, int
  */
 __global__ void updateBonds(int *, int *, int, curandState *);
 
+
 /**
- * Device kernel: Compute mean coordination number
- * 
- * Computes total number of active bonds (sum of all bond values).
- * Result should be divided by N to get mean coordination number per site.
- * 
- * Uses parallel reduction:
- *   1. Each thread sums bonds at its site
- *   2. Block-level reduction
- *   3. atomicAdd to global accumulator
- * 
+ * ============================================================================
+ * Device Kernel: Get coordination number distribution
+ * ============================================================================
+ *
+ * Computes the histogram of coordination numbers across all sites.
+ * Provides statistical information about network connectivity patterns.
+ *
+ * Purpose:
+ *   - Analyze how coordination number varies throughout the network
+ *   - Identify defects or regions with different connectivity
+ *   - Characterize network disorder/heterogeneity
+ *   - Monitor network evolution during simulation
+ *
  * Parameters:
  *   bond - bond state array (read-only)
- *   z - coordination number
- *   zMean - output accumulator on GPU
- * 
- * Result:
- *   *zMean = total active bonds
- *   Mean z = *zMean / N
- * 
- * Example usage:
+ *     Size: N*z integers
+ *     Layout: bond[z*i + dir] = state of bond at site i, direction dir
+ *     Values: 1=active (counts toward coordination), 0=broken (doesn't count)
  *   
- *   double *devZMean;
- *   cudaMalloc(&devZMean, sizeof(double));
- *   getMeanCoordinationNumber<<<blocks, threads>>>(bond, z, devZMean);
+ *   z - coordination number (neighbors per site)
+ *     Values: 6 (TRIANGULAR), 8 (SQUARE_MOORE)
  *   
- *   double hostZMean;
- *   cudaMemcpy(&hostZMean, devZMean, sizeof(double), cudaMemcpyDeviceToHost);
- *   double meanZ = hostZMean / N;
+ *   distrib - output histogram array (modified)
+ *     Size: (z+1) integers
+ *     Purpose: distrib[k] = number of sites with exactly k active bonds
+ *     Range: k ∈ [0, z] (minimum 0 bonds, maximum z bonds)
+ *     Layout: distrib[0] = isolated sites
+ *             distrib[1] = sites with 1 active bond
+ *             ...
+ *             distrib[z] = sites with all z bonds active (fully connected)
+ *
+ * Algorithm:
+ *   1. Each thread processes one site
+ *   2. Counts active bonds at that site (sum of bond[z*i + dir])
+ *   3. Atomically increments distrib[count]
+ *   4. Result: histogram of coordination number distribution
+ *
+ * Output interpretation:
+ *   - If distrib[6] = 100: 100 sites have all 6 bonds active (triangular)
+ *   - If distrib[3] = 50:  50 sites have exactly 3 active bonds (half-connected)
+ *   - If distrib[0] = 5:   5 isolated sites (connectivity = 0)
+ *   - Sum(distrib[k]) = N (total sites)
+ *
+ * Physical significance:
+ *   - Higher distrib[z] → more connected, stiffer network
+ *   - More spread distribution → heterogeneous connectivity
+ *   - Indicates bond breaking/healing patterns
+ *
+ * Parallelization:
+ *   - One thread per site (N threads total)
+ *   - Atomic operations ensure safe histogram updates
+ *   - No synchronization needed (atomic operations are independent)
+ *
+ * Performance:
+ *   - Time: O(N) to scan all sites
+ *   - Space: O(z) for output histogram (small)
+ *
+ * Usage example:
+ *   
+ *   int *devDistrib;
+ *   cudaMalloc(&devDistrib, (z+1) * sizeof(int));
+ *   
+ *   // Initialize histogram to zero
+ *   cudaMemset(devDistrib, 0, (z+1) * sizeof(int));
+ *   
+ *   // Compute distribution
+ *   getZDistb<<<nBlocks, nThreads>>>(devPtrBond, z, devDistrib);
+ *   
+ *   // Copy to host
+ *   int *hostDistrib = (int*)malloc((z+1) * sizeof(int));
+ *   cudaMemcpy(hostDistrib, devDistrib, (z+1) * sizeof(int), 
+ *              cudaMemcpyDeviceToHost);
+ *   
+ *   // Analyze
+ *   printf("Coordination number distribution:\n");
+ *   for (int k = 0; k <= z; k++) {
+ *       printf("  z=%d: %d sites (%.1f%%)\n", k, hostDistrib[k],
+ *              100.0 * hostDistrib[k] / N);
+ *   }
+ *
+ * Related functions:
+ *   - getMeanCoordinationNumber(): Computes average z (scalar)
+ *   - getZDistb(): This function (histogram distribution)
+ *   - Difference: Mean vs full distribution characterization
+ *
+ * Notes:
+ *   - Output must be initialized to zero before kernel call
+ *   - Atomic operations ensure correctness with concurrent threads
+ *   - Works with both SQUARE_MOORE (z=8) and TRIANGULAR (z=6) lattices
+ *   - Distribution size always (z+1) to accommodate [0, z] range
  */
-
-
 __global__ void getZDistb(const int *, int, int *);
-
-
 
 #endif  // __NETWORK_H__

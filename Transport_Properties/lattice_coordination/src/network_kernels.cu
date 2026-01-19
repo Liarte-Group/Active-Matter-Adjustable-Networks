@@ -18,8 +18,8 @@
  * 
  * Author: William G. C. Oropesa 
  * Institution: ICTP South American Institute for Fundamental Research
- * GitHub Repository: https://github.com/williamGOC/
- * Date: November 2025
+ * GitHub Repository: ...
+ * Date: ...
  * ============================================================================
  */
 
