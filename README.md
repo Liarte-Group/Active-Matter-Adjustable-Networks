@@ -96,4 +96,4 @@ The author gratefully acknowledges **Prof. Danilo B. Liarte** for valuable scien
 The author also thanks **Prof. André P. Vieira** for providing continuous access to GPU cluster resources essential for the development and testing of this software.
 
 ## License
-This project is distributed under the terms specified in the LICENSE file.
+This project is distributed under the terms specified in the ```LICENSE``` file.
