@@ -110,6 +110,7 @@ __host__ network *makeNetwork(LatticeType type, const int dim, const double pack
     HANDLE_ERROR(cudaMalloc((void **)&(pN -> devPtrNeighbor),    pN -> memoryNeighbor));
     HANDLE_ERROR(cudaMalloc((void **)&(pN -> devPtrBond),        pN -> memoryBond));
 
+    // Allocate device memory for particle stopping/blocking analysis
     HANDLE_ERROR(cudaMalloc((void **)&(pN -> devPtrStopReason),   pN -> memoryStopping));
     
     // Allocate device memory for random number generation
@@ -150,11 +151,19 @@ __host__ void getNeighborList(network *pN) {
     int threads = NUMBER_OF_THREADS_PER_BLOCK;
     int blocks  = (z * N + threads - 1) / threads;
 
-    // Launch device kernel
+    // ========================================================================
+    // Launch kernel to compute neighbor connectivity on GPU
+    // ========================================================================
     // Grid configuration: threads cover all N * z neighbor entries
+    // Each thread computes neighbors for one (site, direction) pair
     kerGetNeighborList<<<blocks, threads>>>(pN -> devPtrNeighbor, z, pN -> type);
 
+    // ========================================================================
+    // Error checking and synchronization
+    // ========================================================================
+    // Verify kernel launched without errors
     HANDLE_ERROR(cudaGetLastError());
+    // Wait for GPU to finish computation before host continues
     HANDLE_ERROR(cudaDeviceSynchronize());
 }
 
@@ -165,10 +174,17 @@ __host__ void setBonds(network *pN, const int value) {
     int threads = NUMBER_OF_THREADS_PER_BLOCK;
     int blocks  = (z * N + threads - 1) / threads;
 
-    // Launch device kernel
+    // ========================================================================
+    // Launch kernel to set all bonds to specified value
+    // ========================================================================
     // Grid configuration: threads cover all N*z bond entries
+    // Each thread sets one bond's value
     kerSetBonds<<<blocks, threads>>>(pN -> devPtrBond, z, value);
 
+    // ========================================================================
+    // Error checking (without synchronization)
+    // ========================================================================
+    // Verify kernel launched without errors
     HANDLE_ERROR(cudaGetLastError());
     // Note: No cudaDeviceSynchronize() here - kernel launches asynchronously
     // Add if synchronization is needed before next GPU operation
@@ -198,6 +214,7 @@ __host__ void putABPOnNetwork(network *pN) {
     // STEP 3: Fisher-Yates partial shuffle to select nParticles unique sites
     // ========================================================================
     // Only shuffle first nParticles positions for efficiency
+    // This generates random unique positions without replacement
     for (int i = 0; i < pN -> nParticles; i++) {
         // Pick a random index between i and N-1 (inclusive)
         // This ensures we select from unshuffled portion
@@ -216,7 +233,7 @@ __host__ void putABPOnNetwork(network *pN) {
         // Use the chosen index as particle position
         int idx = indices[i];
 
-        // Mark the site as occupied
+        // Mark the site as occupied (value = 1)
         pN -> site[idx] = 1;
 
         // Store particle position in index array
@@ -254,6 +271,7 @@ __host__ void initCurand(network *pN) {
     // ========================================================================
     // STEP 2: Calculate grid configuration for kernel launches
     // ========================================================================
+    // Determine number of blocks needed to cover all RNG states
     unsigned threads = NUMBER_OF_THREADS_PER_BLOCK;
     unsigned blocksBond = (totalBondStates + threads - 1) / threads;
     unsigned blocksSite = (totalSiteStates + threads - 1) / threads;
@@ -263,8 +281,10 @@ __host__ void initCurand(network *pN) {
     // ========================================================================
     // Each thread initializes one bond RNG state
     // Sequence number = thread index for independence
+    // All bond states use same seed for reproducibility
     setupCurandState<<<blocksBond, threads>>>(pN -> devPtrCurandStatesBond, totalBondStates, pN -> seed);
 
+    // Error checking and synchronization
     HANDLE_ERROR(cudaGetLastError());
     HANDLE_ERROR(cudaDeviceSynchronize());
 
@@ -272,10 +292,11 @@ __host__ void initCurand(network *pN) {
     // STEP 4: Initialize RNG states for sites/particles
     // ========================================================================
     // Each thread initializes one site/particle RNG state
-    // Different seed to avoid correlation with bond RNG
+    // Different seed (original + 1234) to avoid correlation with bond RNG
     // Offset of 1234 ensures independent random sequences
     setupCurandState<<<blocksSite, threads>>>(pN -> devPtrCurandStatesSite, totalSiteStates, pN -> seed + 1234UL);
 
+    // Error checking and synchronization
     HANDLE_ERROR(cudaGetLastError());
     HANDLE_ERROR(cudaDeviceSynchronize());
 }
@@ -306,12 +327,12 @@ __host__ void destroyNetwork(network *pN) {
         HANDLE_ERROR(cudaFree(pN -> devPtrNeighbor));
         HANDLE_ERROR(cudaFree(pN -> devPtrBond));
         
+        // Free device memory for particle stopping/blocking analysis
+        HANDLE_ERROR(cudaFree(pN -> devPtrStopReason));
+        
         // Free device memory for random number generation
         HANDLE_ERROR(cudaFree(pN -> devPtrCurandStatesBond));
         HANDLE_ERROR(cudaFree(pN -> devPtrCurandStatesSite));
-
-        HANDLE_ERROR(cudaFree(pN -> devPtrStopReason));
-    
 
         ////////////////////////////////////////////////////////////////////
         //                 FREE NETWORK STRUCTURE                         //
@@ -333,12 +354,14 @@ __host__ void mcStep(network *pN) {
     // STEP 1: Update particle positions and directions
     // ========================================================================
     // Particles attempt movement, change direction based on persistence
+    // One thread per particle for fully parallel updates
     
     int threadsParticles = NUMBER_OF_THREADS_PER_BLOCK;
     int blocksParticles = (nParticles + threadsParticles - 1) / threadsParticles;
 
     // Launch particle update kernel
     // One thread per particle
+    // Includes tracking of particle stopping reasons for analysis
     updateParticles<<<blocksParticles, threadsParticles>>>(
         pN -> devPtrSite,
         pN -> devPtrNeighbor,
@@ -352,6 +375,7 @@ __host__ void mcStep(network *pN) {
         pN -> devPtrCurandStatesSite
     );
 
+    // Error checking and synchronization
     HANDLE_ERROR(cudaGetLastError());
     HANDLE_ERROR(cudaDeviceSynchronize());
 
@@ -359,6 +383,7 @@ __host__ void mcStep(network *pN) {
     // STEP 2: Update bond states (regeneration)
     // ========================================================================
     // Broken bonds regenerate with probability P_REGEN
+    // One thread per bond directional pair for fully parallel updates
     
     int threadsBonds = NUMBER_OF_THREADS_PER_BLOCK;
     int blocksBonds = (N * z + threadsBonds - 1) / threadsBonds;
@@ -372,34 +397,25 @@ __host__ void mcStep(network *pN) {
         pN -> devPtrCurandStatesBond
     );
 
+    // Error checking and synchronization
     HANDLE_ERROR(cudaGetLastError());
     HANDLE_ERROR(cudaDeviceSynchronize());
 
     // ========================================================================
     // Increment iteration counter
     // ========================================================================
+    // Track total number of MC steps executed
     pN -> iter++;
-}
-
-
-
-__host__ void mcSteps(network *pN, int nSteps) {
-
-    for (int step = 0; step < nSteps; step++) {
-        
-        // Perform one MC step
-        mcStep(pN);
-
-        //TODO
-
-    }
 }
 
 
 
 __host__ void syncAndCopyToCPU(network *pN) {
 
-    // Ensure all GPU operations are complete
+    // ========================================================================
+    // Synchronize device and transfer simulation state to host
+    // ========================================================================
+    // Ensure all GPU operations are complete before copying
     HANDLE_ERROR(cudaDeviceSynchronize());
 
     // ========================================================================
@@ -415,6 +431,6 @@ __host__ void syncAndCopyToCPU(network *pN) {
     // Copy particle directions (which direction each particle faces)
     HANDLE_ERROR(cudaMemcpy(pN -> direction, pN -> devPtrDirection, pN -> memoryDirection, cudaMemcpyDeviceToHost));
 
-    // Copy bond on the lattice
+    // Copy bond status on the lattice
     HANDLE_ERROR(cudaMemcpy(pN -> bond, pN -> devPtrBond, pN -> memoryBond, cudaMemcpyDeviceToHost));
 }

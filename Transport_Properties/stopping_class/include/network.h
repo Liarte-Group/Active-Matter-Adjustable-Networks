@@ -897,38 +897,98 @@ __global__ void updateParticles(int *, int *, int *, int *, int *, int *, int, i
  */
 __global__ void updateBonds(int *, int *, int, curandState *);
 
+
 /**
- * Device kernel: Compute mean coordination number
+ * Device kernel: Reduce and aggregate stop causes
  * 
- * Computes total number of active bonds (sum of all bond values).
- * Result should be divided by N to get mean coordination number per site.
+ * Computes statistics about why simulations stopped or particles halted.
+ * Aggregates stop reason codes across all particles into a summary histogram.
  * 
- * Uses parallel reduction:
- *   1. Each thread sums bonds at its site
- *   2. Block-level reduction
- *   3. atomicAdd to global accumulator
+ * Purpose:
+ *   - Analyze particle stopping patterns
+ *   - Identify common failure/termination modes
+ *   - Characterize network blocking behavior
+ *   - Debug simulation issues
  * 
  * Parameters:
- *   bond - bond state array (read-only)
- *   z - coordination number
- *   zMean - output accumulator on GPU
- * 
- * Result:
- *   *zMean = total active bonds
- *   Mean z = *zMean / N
- * 
- * Example usage:
+ *   stopReasons - input array of stop reason codes (read-only)
+ *     Size: nParticles integers
+ *     Values: Reason codes indicating why particle stopped/halted
+ *     Layout: stopReasons[i] = code for particle i
  *   
- *   double *devZMean;
- *   cudaMalloc(&devZMean, sizeof(double));
- *   getMeanCoordinationNumber<<<blocks, threads>>>(bond, z, devZMean);
+ *   causes - output histogram array (modified)
+ *     Size: Implementation-dependent (typically 10-32 cause types)
+ *     Purpose: causes[k] = count of particles with stop reason k
+ *     Layout: One counter per unique stop reason code
  *   
- *   double hostZMean;
- *   cudaMemcpy(&hostZMean, devZMean, sizeof(double), cudaMemcpyDeviceToHost);
- *   double meanZ = hostZMean / N;
+ *   nParticles - total number of particles
+ *     Range: > 0
+ *     Used for: Loop bounds, normalization
+ * 
+ * Algorithm:
+ *   1. Each thread processes one particle
+ *   2. Reads stop reason code from stopReasons[i]
+ *   3. Atomically increments causes[code] histogram bin
+ *   4. Result: histogram of stop reason distribution
+ * 
+ * Output interpretation:
+ *   - causes[0] = particles that haven't stopped
+ *   - causes[1] = particles blocked by network (no active bonds)
+ *   - causes[2] = particles stuck by crowding (occupancy collision)
+ *   - causes[k] = particles with stop reason k
+ *   - Sum(causes) = nParticles (total particles)
+ * 
+ * Physical significance:
+ *   - High causes[blocked] → network too fragmented
+ *   - High causes[crowded] → system too dense
+ *   - Balanced distribution → healthy network state
+ * 
+ * Parallelization:
+ *   - One thread per particle (nParticles threads total)
+ *   - Atomic operations ensure safe histogram updates
+ *   - No synchronization needed (atomic operations are independent)
+ * 
+ * Performance:
+ *   - Time: O(nParticles) to scan all particles
+ *   - Space: O(maxReasonCode) for output histogram
+ * 
+ * Usage example:
+ *   
+ *   int *devStopReasons;     // Particle stop reason codes
+ *   int *devCauses;          // Output histogram
+ *   
+ *   cudaMalloc(&devStopReasons, nParticles * sizeof(int));
+ *   cudaMalloc(&devCauses, MAX_CAUSES * sizeof(int));
+ *   
+ *   // Initialize histogram to zero
+ *   cudaMemset(devCauses, 0, MAX_CAUSES * sizeof(int));
+ *   
+ *   // Compute distribution
+ *   reduceStopCauses<<<nBlocks, nThreads>>>(devStopReasons, devCauses, nParticles);
+ *   
+ *   // Copy to host
+ *   int *hostCauses = (int*)malloc(MAX_CAUSES * sizeof(int));
+ *   cudaMemcpy(hostCauses, devCauses, MAX_CAUSES * sizeof(int), 
+ *              cudaMemcpyDeviceToHost);
+ *   
+ *   // Analyze
+ *   printf("Particle stop reasons:\n");
+ *   for (int k = 0; k < MAX_CAUSES; k++) {
+ *       printf("  Reason %d: %d particles (%.1f%%)\n", k, hostCauses[k],
+ *              100.0 * hostCauses[k] / nParticles);
+ *   }
+ * 
+ * Related functions:
+ *   - getZDistb: Similar histogram for coordination number (not stop causes)
+ *   - reduceStopCauses: This function (stop reason distribution)
+ *   - Difference: Coordination vs stopping behavior characterization
+ * 
+ * Notes:
+ *   - Output must be initialized to zero before kernel call
+ *   - Atomic operations ensure correctness with concurrent threads
+ *   - Works with any number of stop reason code types
+ *   - Output histogram size must match maximum stop reason code + 1
  */
-
-
 __global__ void reduceStopCauses(const int *, int *, int);
 
 
