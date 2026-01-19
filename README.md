@@ -81,15 +81,18 @@ This repository is developed and maintained by the **Liarte-Group**, an open and
 
 ### Code Author
 - **William G. C. Oropesa**
+
 Main developer and author of the code. Responsible for the design, implementation, optimization, and validation of all CUDA-based simulations.
 
 ### Scientific Contributions
 - Pablo de Castro
 - Danilo B. Liarte *(owner of group)*
+
 Provided key scientific ideas and conceptual guidance that strongly influenced the development of the models and numerical strategies implemented in this framework.
 
 ### Computational Support
 - André P. Vieira
+
   Provided continuous access to GPU cluster resources essential for the development, testing, and large-scale execution of the simulations.
 
 ---
