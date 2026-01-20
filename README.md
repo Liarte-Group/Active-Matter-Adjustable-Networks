@@ -62,7 +62,7 @@ Detailed instructions and model-specific descriptions are provided in the corres
   - `bc` (required for floating-point arithmetic in job scripts)
 
 ### Compilation model
-- Simulations are **compiled on-the-fly** using `nvcc` within the submission script.
+- Simulations are **compiled on-the-fly** to allow parameter-dependent optimization using `nvcc` within the submission script.
 - CUDA architecture flags (`-arch=sm_xx`) may need to be adapted to the target GPU.
 
 ### Execution environment (recommended)
