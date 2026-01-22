@@ -7,7 +7,6 @@
  * for managing lattices with active Brownian particles (ABPs). It provides:
  *   - Network topology representation (neighbors, bonds, sites)
  *   - Particle management (positions, directions, occupancy)
- *   - Elastic deformation support (displacements, forces)
  *   - Random number generation (cuRAND integration)
  *   - Lattice geometry (coordinates, boundaries)
  * 
@@ -15,22 +14,13 @@
  *   - Support for multiple lattice types (square Moore, triangular)
  *   - Dual host/device memory management
  *   - Integrated particle and bond dynamics
- *   - Elasticity computation support
  *   - Thread-safe random number generation
  * 
- * Workflow:
- *   1. Create network: network *net = makeNetwork(type, dim, pack, pPerst, pRegen)
- *   2. Initialize geometry: getNeighborList(), getNetworkCoordinate(), etc.
- *   3. Place particles: putABPOnNetwork()
- *   4. Set RNG: initCurand()
- *   5. Simulate: mcSteps(net, nSteps) in a loop
- *   6. Analyze: getEnergy(), getForceVector(), etc. (from elasticity module)
- *   7. Clean up: destroyNetwork()
  * 
- * Author: William G. C. Oropesa
+ * Author: William G. C. Oropesa (Liarte-Group)
  * Institution: ICTP South American Institute for Fundamental Research
- * GitHub Repository: https://github.com/williamGOC/
- * Date: November 2025
+ * GitHub Repository: https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks
+ * Date: January 2026
  * ============================================================================
  */
 
@@ -722,81 +712,6 @@ __host__ void initCurand(network *);
  */
 __host__ void mcStep(network *);
 
-/**
- * Execute multiple Monte Carlo steps
- * 
- * Repeatedly calls mcStep() for nSteps iterations.
- * Main simulation loop driver.
- * 
- * Parameters:
- *   pN - pointer to network
- *   nSteps - number of MC steps to execute
- * 
- * Typical usage:
- *   
- *   // Run 10,000 MC steps
- *   mcSteps(net, 10000);
- *   
- *   // Equilibrate, then measure
- *   mcSteps(net, 100000);  // Equilibration
- *   double energy = getEnergy(net, devEnergy);  // Measurement
- * 
- * Performance:
- *   - Each step: ~milliseconds (kernel launches + GPU computation)
- *   - 10,000 steps: ~10 seconds (typical for moderate network size)
- * 
- * See also:
- *   - mcStep(): Single step
- */
-__host__ void mcSteps(network *, int);
-
-
-/**
- * ============================================================================
- * HOST FUNCTION DECLARATIONS - Data Synchronization
- * ============================================================================
- */
-
-/**
- * Synchronize and copy GPU data to CPU memory
- * 
- * Transfers current state of GPU arrays to host (CPU) memory.
- * Necessary before CPU analysis or printing device data.
- * 
- * GPU → CPU transfers:
- *   - devPtrSite → site (occupancy)
- *   - devPtrIndex → index (particle positions)
- *   - devPtrDirection → direction (particle orientations)
- *   - devPtrBond → bond (bond states)
- * 
- * Parameters:
- *   pN - pointer to network
- * 
- * Performance:
- *   - D2H transfer (PCIe bandwidth: ~10-20 GB/s)
- *   - ~100-500 μs for typical network size
- *   - Should NOT be called every iteration (use sparingly)
- * 
- * Example usage:
- *   
- *   // Simulate
- *   mcSteps(net, 1000);
- *   
- *   // Analyze on CPU
- *   syncAndCopyToCPU(net);
- *   
- *   // Now can directly access host arrays
- *   for (int i = 0; i < N; i++) {
- *       if (net->site[i] == 1) {
- *           // Site occupied, analyze particle
- *       }
- *   }
- * 
- * See also:
- *   - printDU(): Debug output using CPU data
- */
-__host__ void syncAndCopyToCPU(network *);
-
 
 /**
  * ============================================================================
@@ -810,14 +725,6 @@ __host__ void syncAndCopyToCPU(network *);
  * See getNeighborList() for documentation
  */
 __global__ void kerGetNeighborList(int *, int, LatticeType);
-
-/**
- * Device kernel: Calculate site coordinates
- * Host wrapper: getNetworkCoordinate()
- * See getNetworkCoordinate() for documentation
- */
-__global__ void kerGetNetworkCoordinate(double *, int, LatticeType);
-
 
 /**
  * ============================================================================
@@ -951,37 +858,6 @@ __global__ void updateBonds(int *, int *, int, curandState *);
  * Performance:
  *   - Time: O(nParticles) to scan all particles
  *   - Space: O(maxReasonCode) for output histogram
- * 
- * Usage example:
- *   
- *   int *devStopReasons;     // Particle stop reason codes
- *   int *devCauses;          // Output histogram
- *   
- *   cudaMalloc(&devStopReasons, nParticles * sizeof(int));
- *   cudaMalloc(&devCauses, MAX_CAUSES * sizeof(int));
- *   
- *   // Initialize histogram to zero
- *   cudaMemset(devCauses, 0, MAX_CAUSES * sizeof(int));
- *   
- *   // Compute distribution
- *   reduceStopCauses<<<nBlocks, nThreads>>>(devStopReasons, devCauses, nParticles);
- *   
- *   // Copy to host
- *   int *hostCauses = (int*)malloc(MAX_CAUSES * sizeof(int));
- *   cudaMemcpy(hostCauses, devCauses, MAX_CAUSES * sizeof(int), 
- *              cudaMemcpyDeviceToHost);
- *   
- *   // Analyze
- *   printf("Particle stop reasons:\n");
- *   for (int k = 0; k < MAX_CAUSES; k++) {
- *       printf("  Reason %d: %d particles (%.1f%%)\n", k, hostCauses[k],
- *              100.0 * hostCauses[k] / nParticles);
- *   }
- * 
- * Related functions:
- *   - getZDistb: Similar histogram for coordination number (not stop causes)
- *   - reduceStopCauses: This function (stop reason distribution)
- *   - Difference: Coordination vs stopping behavior characterization
  * 
  * Notes:
  *   - Output must be initialized to zero before kernel call

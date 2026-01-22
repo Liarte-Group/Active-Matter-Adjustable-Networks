@@ -19,10 +19,10 @@
  *
  * All parameters can be overridden at compile time using -D flags.
  *
- * Author: William G. C. Oropesa
+ * Author: William G. C. Oropesa (Liarte-Group)
  * Institution: ICTP South American Institute for Fundamental Research
- * GitHub Repository: https://github.com/williamGOC/
- * Date: November 2025
+ * GitHub Repository: https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks
+ * Date: January 2026
  * ============================================================================
  */
 
@@ -139,19 +139,5 @@ inline void HandleError(cudaError_t err, const char *file, int line) {
     }
     // No action needed if there is no error
 }
-
-// ========================================================================
-// LATTICE GEOMETRY - SHIFT VECTORS
-// ========================================================================
-
-// Square lattice with Moore neighbors (z = 8)
-// Displacement vectors: horizontal and vertical shifts per direction
-static const double shift_0_sm[8] = {DIST, DIST, 0, -DIST, -DIST, -DIST, 0, DIST};
-static const double shift_1_sm[8] = {0, DIST, DIST, DIST, 0, -DIST, -DIST, -DIST};
-
-// Triangular lattice (z = 6)
-// Hexagonal close-packed displacement vectors
-static const double shift_0_tr[6] = {DIST, DIST / 2.0, -DIST / 2.0, -DIST, -DIST / 2.0, DIST / 2.0};
-static const double shift_1_tr[6] = {0, sqrt(3) * DIST / 2.0, sqrt(3) * DIST / 2.0, 0, -sqrt(3) * DIST / 2.0, -sqrt(3) * DIST / 2.0};
 
 #endif
