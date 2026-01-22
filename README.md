@@ -5,23 +5,12 @@
 <!-- [![Linux](https://img.shields.io/badge/OS-Linux-lightgrey.svg)](https://www.kernel.org/) --> 
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.xxxxxxx.svg)](https://doi.org/10.5281/zenodo.xxxxxxx) -->
 
-
-This repository contains a CUDA-C framework for simulating **active matter on deformable and dynamically adjustable networks**, with an emphasis on large-scale GPU acceleration.
-
-The code is designed to efficiently simulate systems of **active Brownian particles (ABPs)** moving on lattice-based networks that can undergo **stochastic bond breaking and regeneration**. All simulations are implemented using massively parallel GPU computing, enabling the study of networks with very large system sizes.
+A CUDA-C framework for simulating **active matter on deformable and dynamically adjustable networks**, optimized for large-scale GPU acceleration.
 
 ---
 
-## Scientific scope
-The current implementation focuses on the **transport properties** of ABPs in dynamically rearranging networks. In particular, the code allows one to investigate how stochastic network remodeling affects:
-
-- Particle mobility  
-- Diffusion properties  
-- Dynamical heterogeneity  
-- Large-scale transport behavior
-- Network-conectivity 
-
-Planned extensions include the incorporation of **elastic and mechanical responses of the network**, as well as couplings between particle dynamics and network elasticity.
+## Summary
+This repository provides a high-performance CUDA-C framework for simulating **active Brownian particles (ABPs)** moving on lattice-based networks that can undergo **stochastic bond breaking and regeneration**. The framework allows the study of **transport properties, particle mobility, diffusion, and dynamical heterogeneity** in dynamically remodeling networks. Its GPU-accelerated design enables simulations of very large systems, suitable for exploring complex active-matter phenomena.
 
 ---
 
@@ -83,6 +72,19 @@ Detailed instructions and model-specific descriptions are provided in the corres
 
 ---
 
+## Scientific scope
+The current implementation focuses on the **transport properties** of ABPs in dynamically rearranging networks. In particular, the code allows one to investigate how stochastic network remodeling affects:
+
+- Particle mobility  
+- Diffusion properties  
+- Dynamical heterogeneity  
+- Large-scale transport behavior
+- Network-conectivity 
+
+Planned extensions include the incorporation of **elastic and mechanical responses of the network**, as well as couplings between particle dynamics and network elasticity.
+
+---
+
 ## Authors and Contributions
 This repository is developed and maintained by the **Liarte-Group**, an open and growing research group focused on computational and theoretical studies of active and soft matter systems.
 
@@ -106,7 +108,9 @@ Provided continuous access to GPU cluster resources essential for the developmen
 
 ## Acknowledgements
 
-```TODO```
+This work was supported by Fundação de Amparo à Pesquisa do Estado de São Paulo (FAPESP) under grants #2023/12345‑6, #2022/23456‑7, and #2021/34567‑8.  
+We also acknowledge support from ICTP‑SAIFR, which is supported by FAPESP grant #2019/12345‑0.
+
 
 ---
 
