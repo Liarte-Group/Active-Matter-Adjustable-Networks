@@ -110,7 +110,9 @@ This work was supported by Fundação de Amparo à Pesquisa do Estado de São Pa
 ---
 
 ## Citation
-If you use this code in your research, please cite
+If you use this code in your research, please cite:
+
+ - William G. C. Oropesa, Pablo de Castro, Danilo B. Liarte, André P. Vieira, "Active Matter on Adjustable Networks", Zenodo, DOI: [to be assigned]
 
 <!-- Actualizar DOI cuando Zenodo lo genere. -->
 ---
