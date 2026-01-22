@@ -7,25 +7,23 @@
  * ============================================================================
  *
  * Global compile-time configuration for Active Brownian Particle (ABP)
- * simulations on dynamic lattice networks.
+ * simulations on dynamic networks.
  *
  * This file centralizes all tunable parameters:
- *   - System size and lattice geometry
+ *   - System size and network geometry
  *   - Active particle dynamics (persistence, regeneration)
  *   - Monte Carlo simulation parameters
  *   - CUDA execution configuration
- *   - Visualization (OpenGL) settings
- *   - Color palette definitions
  *
  * All parameters can be overridden at compile time using -D flags.
  *
  * Reference:
- *   Active Matter on Adjustable Networks I: Transport Properties
+ *   // TODO
  *
  * Author: William G. C. Oropesa
  * Institution: ICTP South American Institute for Fundamental Research
- * GitHub Repository: ....
- * Date: ....
+ * GitHub Repository: https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks
+ * Date: January 2026
  * ============================================================================
  */
 
@@ -40,7 +38,7 @@
 #include <cuda_runtime.h>
 
 // ========================================================================
-// Linear size of the system (L x L lattice)
+// Linear size of the system (LX x LX lattice)
 // Can be overridden at compile time with -DLX=...
 // ========================================================================
 #ifndef LX
@@ -55,7 +53,7 @@
 // Physically, this parameter controls the healing dynamics of the network.
 // ========================================================================
 #ifndef P_REGEN
-#define P_REGEN 0.00001
+#define P_REGEN 0.001
 #endif
 
 // ========================================================================
@@ -70,8 +68,8 @@
 #endif
 
 // ========================================================================
-// Packing fraction of active particles
-// Density of occupied sites in the lattice (0 to 1)
+// Packing-fraction of active particles
+// Density of occupied sites in the lattice (from 0 to 1)
 // Can be overridden with -DPACKING_FRACTION=...
 // ========================================================================
 #ifndef PACKING_FRACTION
@@ -104,16 +102,6 @@
 // ========================================================================
 #ifndef ITERATION
 #define ITERATION 100000
-#endif
-
-// ========================================================================
-// Data collection interval (sampling frequency)
-// Collect measurements every PASS_TIME Monte Carlo steps
-// Reduces correlation between successive measurements
-// Can be overridden with -DPASS_TIME=...
-// ========================================================================
-#ifndef PASS_TIME
-#define PASS_TIME 100
 #endif
 
 // ========================================================================
@@ -165,7 +153,7 @@ inline void HandleError(cudaError_t err, const char *file, int line) {
 }
 
 // ========================================================================
-// Device projectors for each lattice type
+// Host projectors for each lattice type
 //
 // These arrays define the displacement vectors to neighboring sites
 // for each lattice geometry.
@@ -179,4 +167,4 @@ static const double shift_1_sm[8] = {0, DIST, DIST, DIST, 0, -DIST, -DIST, -DIST
 static const double shift_0_tr[6] = {DIST, DIST / 2.0, -DIST / 2.0, -DIST, -DIST / 2.0, DIST / 2.0};
 static const double shift_1_tr[6] = {0, sqrt(3) * DIST / 2.0, sqrt(3) * DIST / 2.0, 0, -sqrt(3) * DIST / 2.0, -sqrt(3) * DIST / 2.0};
 
-#endif
+#endif  //__CONFIG_H__
