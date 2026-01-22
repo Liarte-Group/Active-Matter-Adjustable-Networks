@@ -32,10 +32,12 @@ Each study directory follows the same internal structure:
 ```text
 ├── main.cu        # Main CUDA entry point
 ├── submit.sh      # GPU cluster submission script
+├── UserGuide.md   
 ├── src/           # CUDA source files and kernels
 └── include/       # Headers and configuration files
+
 ```
-Detailed instructions and model-specific descriptions are provided in the corresponding local ```README.md``` files.
+Detailed instructions and model-specific descriptions are provided in the corresponding local ```UserGuide.md``` files.
 
 ---
 
