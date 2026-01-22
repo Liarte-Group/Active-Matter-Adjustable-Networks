@@ -54,7 +54,6 @@ __global__ void setupCurandState(curandState *states, const int size, unsigned l
 }
 
 
-
 __global__ void kerGetNeighborList(int *neighbor, const int z, LatticeType type) {
     
     // Compute global thread index
@@ -113,8 +112,6 @@ __global__ void kerGetNeighborList(int *neighbor, const int z, LatticeType type)
             break;
     }
 }
-
-
 
 
 __global__ void kerSetBonds(int *bond, const int z, const int value) {
