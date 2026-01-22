@@ -350,13 +350,11 @@ typedef struct {
     size_t memorySite;                 // Size of site array
     size_t memoryPartX;                // size of particles position
     size_t memoryIndex;                // Size of particle index array
-    size_t memoryShift;                // Size of particles steps on lattice
     size_t memoryDirection;            // Size of particle direction array
     size_t memoryNeighbor;             // Size of neighbor list
     size_t memoryBond;                 // Size of bond array
     size_t memoryCurandStatesBond;     // Size of bond RNG states
     size_t memoryCurandStatesSite;     // Size of site RNG states
-    size_t memoryMSD;                  // Size of auxiliar vector for msd calculations
 
     // ========================================================================
     // HOST MEMORY ARRAYS (CPU side)
@@ -368,12 +366,6 @@ typedef struct {
     int *direction;                    // Host copy: particle directions
     int *bond;                         // Host copy: bond states
 
-    //double *x;                         // Host copy: particle positions
-    //double *x0;                        // Host copy: initial particle positions
-
-    double *shiftDir0;                 // Host copy: horizontal lattice shifts
-    double *shiftDir1;                 // Host copy: vertical lattice shifts
-
     // ========================================================================
     // DEVICE MEMORY ARRAYS (GPU side)
     // ========================================================================
@@ -384,12 +376,6 @@ typedef struct {
     int *devPtrDirection;              // Particle direction (0 to z-1)
     int *devPtrNeighbor;               // Neighbor list: neighbor[z*i + dir]
     int *devPtrBond;                   // Bond state: 1=active, 0=broken
-
-    //double *devPtrX;                   // Particle positions
-    //double *devPtrX0;                  // Initial particle positions
-
-    double *devPtrShiftDir0;           // Horizontal lattice shifts
-    double *devPtrShiftDir1;           // Vertical lattice shifts
 
     // ========================================================================
     // LATTICE AND SIMULATION PROPERTIES
@@ -405,13 +391,6 @@ typedef struct {
     double pRegen;                     // Bond regeneration probability
     int nParticles;                    // Total number of ABPs on network
     LatticeType type;                  // Type of lattice (enum: SQUARE_MOORE or TRIANGULAR)
-
-    double msd;                        // Mean square displacement
-    double c4;                         // Dinamical heterogeneity
-    double alpha2;                     // non-Gaussianity parameter
-
-    double *devPtrPartialMSD;          // Auxiliar vector to compute msd
-    double *devPtrPartialMSD2;         // Auxiliar vector to compute c4
 
     // ========================================================================
     // DEVICE RNG STATES (CURAND library)
@@ -494,28 +473,6 @@ __host__ void destroyNetwork(network *);
  * HOST FUNCTION DECLARATIONS - Lattice Geometry Initialization
  * ============================================================================
  */
-
-
-/**
- * Copy lattice-specific shift vectors from host to memory
- * 
- * Initializes shift vectors (horizontal and vertical displacement per direction)
- * based on lattice type. These define how particles move on the lattice.
- * 
- * Operations:
- *   - Copies lattice-specific constants to host memory
- *   - Shift vectors define connectivity geometry
- *   - Different lattices have different shift patterns
- * 
- * Parameters:
- *   pN - pointer to network
- * 
- * Output:
- *   pN -> shiftDir0: horizontal shift per direction
- *   pN -> shiftDir1: vertical shift per direction
- * 
- */
-__host__ void getShift(network *);
 
 
 /**

@@ -162,19 +162,4 @@ inline void HandleError(cudaError_t err, const char *file, int line) {
     // No action needed if there is no error
 }
 
-// ========================================================================
-// Host projectors for each lattice type
-//
-// These arrays define the displacement vectors to neighboring sites
-// for each lattice geometry.
-// ========================================================================
-
-// Square lattice with Moore neighbors (z = 8)
-static const double shift_0_sm[8] = {DIST, DIST, 0, -DIST, -DIST, -DIST, 0, DIST};
-static const double shift_1_sm[8] = {0, DIST, DIST, DIST, 0, -DIST, -DIST, -DIST};
-
-// Triangular regular (z = 6)
-static const double shift_0_tr[6] = {DIST, DIST / 2.0, -DIST / 2.0, -DIST, -DIST / 2.0, DIST / 2.0};
-static const double shift_1_tr[6] = {0, sqrt(3) * DIST / 2.0, sqrt(3) * DIST / 2.0, 0, -sqrt(3) * DIST / 2.0, -sqrt(3) * DIST / 2.0};
-
 #endif

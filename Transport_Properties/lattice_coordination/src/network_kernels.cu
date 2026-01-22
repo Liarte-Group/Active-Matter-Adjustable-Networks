@@ -115,8 +115,6 @@ __global__ void kerGetNeighborList(int *neighbor, const int z, LatticeType type)
 }
 
 
-
-
 __global__ void kerSetBonds(int *bond, const int z, const int value) {
     
     // Compute global thread index
