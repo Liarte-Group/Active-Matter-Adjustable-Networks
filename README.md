@@ -103,7 +103,13 @@ Provided continuous access to GPU cluster resources essential for the developmen
 
 ## Acknowledgements
 
-This work was supported by Fundação de Amparo à Pesquisa do Estado de São Paulo (FAPESP) under grants #2024/23876-3, #2021/10139-2, and #2022/13872-5. We also acknowledge support from ICTP‑SAIFR, which is supported by FAPESP grant #2021/14335-0.
+This work was supported by Fundação de Amparo à Pesquisa do Estado de São Paulo (FAPESP) under Grants:
+ - 2024/23876-3
+ - 2021/10139-2
+ - 2022/13872-5
+ - `Danilo Grant`
+
+We also acknowledge support from ICTP‑SAIFR, which is supported by FAPESP Grant 2021/14335-0.
 
 <!--Falta el grant de Danilo -->
 
