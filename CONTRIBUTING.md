@@ -29,3 +29,6 @@ git checkout -b fix-network-boundary
 ```
 
 2. Implement your changes and make sure:
+    - Code compiles without errors
+    - Example scripts in `examples/` still run correctly
+    - Any new features are documented
