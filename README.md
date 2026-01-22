@@ -94,7 +94,7 @@ Main developer and author of the code. Responsible for the design, implementatio
 ### Scientific Contributions
 - **Pablo de Castro**
 - **Hartmut Löwen**
-- **Danilo B. Liarte** *(owner of group)*
+- **Danilo B. Liarte**
 
 Provided key scientific ideas and conceptual guidance that strongly influenced the development of the models and numerical strategies implemented in this framework.
 
