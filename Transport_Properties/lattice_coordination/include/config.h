@@ -20,7 +20,7 @@
  * Reference:
  *   // TODO
  *
- * Author: William G. C. Oropesa
+ * Author: William G. C. Oropesa (Liarte-Group)
  * Institution: ICTP South American Institute for Fundamental Research
  * GitHub Repository: https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks
  * Date: January 2026

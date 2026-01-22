@@ -18,10 +18,10 @@
  *   Column 1: Time (in units of PASS_TIME steps)
  *   Column 2: Mean coordination number <z>
  *
- * Author: William G. C. Oropesa
+ * Author: William G. C. Oropesa (Liarte-Group)
  * Institution: ICTP South American Institute for Fundamental Research
- * GitHub Repository: ...
- * Date: ...
+ * GitHub Repository: https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks
+ * Date: January 2026
  * ============================================================================
  */
 
