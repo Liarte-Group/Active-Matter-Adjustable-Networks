@@ -37,3 +37,21 @@ git checkout -b fix-network-boundary
     - Clear description of the change
     - Reference to any related issue (if applicable)
     - Instructions for testing your contribution
+
+---
+
+### 3. Code Guidelines
+- Folloe the existing **CUDA-C style** (indentation, variable names, modular functions)
+- Comment **non-obvious logic**, specially mathematical or algorithmic parts
+- Keep functions **modular and reusable**
+
+---
+
+### 4. Communication and Conduct
+- Be respectful and professional in comments, issues, and pull requests
+- Follow the **scientific and open-source collaboration etiquette**
+- Ask questions on issues before implementing large changes
+
+---
+
+*Thank you for helping improve Active-Matter-Adjustable-Networks! Your contributions make this code more robust, reproducible, and valuable for the scientific community.*
