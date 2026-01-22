@@ -89,6 +89,7 @@ Main developer and author of the code. Responsible for the design, implementatio
 
 ### Scientific Contributions
 - **Pablo de Castro**
+- **Hartmut Löwen**
 - **Danilo B. Liarte** *(owner of group)*
 
 Provided key scientific ideas and conceptual guidance that strongly influenced the development of the models and numerical strategies implemented in this framework.
@@ -112,7 +113,7 @@ This work was supported by Fundação de Amparo à Pesquisa do Estado de São Pa
 ## Citation
 If you use this code in your research, please cite:
 
- - William G. C. Oropesa, Pablo de Castro, Danilo B. Liarte, André P. Vieira, "Active Matter on Adjustable Networks", Zenodo, DOI: [to be assigned]
+ - William G. C. Oropesa, Pablo de Castro, Hartmut Löwen, Danilo B. Liarte, André P. Vieira, "Active Matter on Adjustable Networks", Zenodo, DOI: [to be assigned]
 
 <!-- Actualizar DOI cuando Zenodo lo genere. -->
 ---
