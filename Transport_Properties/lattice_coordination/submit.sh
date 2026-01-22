@@ -21,10 +21,10 @@
 #      - Organize output files
 #   6. Report completion
 #
-# Author: William G. C. Oropesa
+# Author: William G. C. Oropesa (Liarte-Group)
 # Institution: ICTP South American Institute for Fundamental Research
-# GitHub Repository: https://github.com/williamGOC/
-# Date: November 2025
+# GitHub Repository: https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks
+# Date: January 2026
 ################################################################################
 
 # ============================================================================
