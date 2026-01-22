@@ -97,7 +97,7 @@ int main() {
     //
     // THERMAL parameter defined in config.h (default: 100000 steps)
     // During equilibration, no measurements are collected
-    while (pN->iter < THERMAL) {
+    while (pN -> iter < THERMAL) {
         // Execute one MC step:
         // - updateParticles: Move and reorient particles
         // - updateBonds: Regenerate broken bonds stochastically
@@ -108,7 +108,7 @@ int main() {
     // Reset iteration counter for measurement phase
     // ========================================================================
     // Set counter to 0 to count measurement steps from t=0
-    pN->iter = 0;
+    pN -> iter = 0;
 
     // ========================================================================
     // STEP 4: Allocate GPU memory for coordination number accumulator
@@ -139,7 +139,7 @@ int main() {
     //
     // ITERATION parameter defined in config.h (default: 100000 steps)
     // PASS_TIME parameter defined in config.h (default: 100 steps)
-    while (pN->iter < ITERATION) {
+    while (pN -> iter < ITERATION) {
         
         // ====================================================================
         // Execute one Monte Carlo step
@@ -164,7 +164,7 @@ int main() {
         // Only compute every PASS_TIME steps to reduce data overhead
         // PASS_TIME = sampling interval (reduces correlation between measurements)
         // Example: PASS_TIME=100 means measure every 100 MC steps
-        if (pN->iter % PASS_TIME == 0) {
+        if (pN -> iter % PASS_TIME == 0) {
             
             // ================================================================
             // Initialize GPU accumulator to zero
@@ -188,9 +188,9 @@ int main() {
             //   - atomicAdd increments devPtrCoordination
             //   - Result: total number of active bonds in entire network
             getZDistb<<<blocksForStates, threadsPerBlock>>>(
-                pN->devPtrBond,         // Bond state array
-                pN->z,                  // Coordination number
-                devPtrCoordination      // Output: total active bonds
+                pN -> devPtrBond,         // Bond state array
+                pN -> z,                  // Coordination number
+                devPtrCoordination        // Output: total active bonds
             );
 
             // ================================================================
@@ -225,7 +225,7 @@ int main() {
             //   2  5.847123
             //   ...
             // Can be piped to file: ./a.out > output.dat
-            printf("%d\t%.6f\n", pN->iter / 100, zMean);
+            printf("%d\t%.6f\n", pN -> iter / PASS_TIME, zMean);
         }
     }
 

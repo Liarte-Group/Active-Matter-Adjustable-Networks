@@ -16,10 +16,10 @@
  *   - Parallel reduction for global statistics
  *   - Thread-safe random number generation with cuRAND
  * 
- * Author: William G. C. Oropesa 
+ * Author: William G. C. Oropesa
  * Institution: ICTP South American Institute for Fundamental Research
- * GitHub Repository: ...
- * Date: ...
+ * GitHub Repository: https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks
+ * Date: January 2026
  * ============================================================================
  */
 
@@ -132,7 +132,7 @@ __global__ void kerSetBonds(int *bond, const int z, const int value) {
     // Set bond value at this index
     // ========================================================================
     // Simple assignment: each thread independently writes to one element
-    // No dependencies between threads → fully parallel execution
+    // No dependencies between threads -> fully parallel execution
     // 
     // Common values:
     //   value = 1: Bond is active/connected (allow particle movement)
@@ -163,7 +163,7 @@ __global__ void updateParticles(int *site, int *neighbor, int *bond, int *index,
     // ========================================================================
     // P_PERSIST is the probability that a particle maintains its direction
     // (1 - P_PERST) is the probability it changes direction
-    // Example: P_PERST = 1.0 → always changes; P_PERST = 0.0 → never changes
+    // Example: P_PERST = 1.0 -> always changes; P_PERST = 0.0 -> never changes
     if (curand_uniform(&localState) < (1.0f - P_PERST)) {
         direction[idx] = curand(&localState) % z;  // Assign new random direction
     }
@@ -202,7 +202,7 @@ __global__ void updateParticles(int *site, int *neighbor, int *bond, int *index,
             atomicExch(&bond[z * oldIdx + dir], 0);
             atomicExch(&bond[z * newIdx + (dir + z / 2) % z], 0);
         }
-        // If atomicCAS fails, another particle beat us to the site → nothing happens
+        // If atomicCAS fails, another particle beat us to the site -> nothing happens
     }
 
     // Save updated RNG state
@@ -252,7 +252,7 @@ __global__ void updateBonds(int *bond, int *neighbor, int z, curandState *bondSt
         // ====================================================================
         // bond[bondIdx] == 0 means the bond is broken/removed
         // We regenerate it with probability P_REGEN
-        // Example: P_REGEN = 0.5 → 50% chance to regenerate each broken bond
+        // Example: P_REGEN = 0.5 -> 50% chance to regenerate each broken bond
         if (curand_uniform(&localState) < P_REGEN && bond[bondIdx] == 0) {
             int newState = 1;  // Regenerated state
             
@@ -270,9 +270,6 @@ __global__ void updateBonds(int *bond, int *neighbor, int z, curandState *bondSt
     // Save updated RNG state
     bondStates[bondIdx] = localState;
 }
-
-
-
 
 
 // CUDA kernel to compute the coordination number (number of occupied neighbors) 

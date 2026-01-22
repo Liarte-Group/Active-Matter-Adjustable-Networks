@@ -105,6 +105,16 @@
 #endif
 
 // ========================================================================
+// Data collection interval (sampling frequency)
+// Collect measurements every PASS_TIME Monte Carlo steps
+// Reduces correlation between successive measurements
+// Can be overridden with -DPASS_TIME=...
+// ========================================================================
+#ifndef PASS_TIME
+#define PASS_TIME 100
+#endif
+
+// ========================================================================
 // CUDA configuration: threads per block
 // Typical values: 256, 512, 1024
 // Can be overridden with -DNUMBER_OF_THREADS_PER_BLOCK=...
@@ -167,4 +177,4 @@ static const double shift_1_sm[8] = {0, DIST, DIST, DIST, 0, -DIST, -DIST, -DIST
 static const double shift_0_tr[6] = {DIST, DIST / 2.0, -DIST / 2.0, -DIST, -DIST / 2.0, DIST / 2.0};
 static const double shift_1_tr[6] = {0, sqrt(3) * DIST / 2.0, sqrt(3) * DIST / 2.0, 0, -sqrt(3) * DIST / 2.0, -sqrt(3) * DIST / 2.0};
 
-#endif  //__CONFIG_H__
+#endif
