@@ -32,3 +32,8 @@ git checkout -b fix-network-boundary
     - Code compiles without errors
     - Example scripts in `examples/` still run correctly
     - Any new features are documented
+
+3. Submit a pull request with:
+    - Clear description of the change
+    - Reference to any related issue (if applicable)
+    - Instructions for testing your contribution
