@@ -19,3 +19,13 @@ If you find bugs, unexpected behavior, or have feature requests:
 - Label the issue appropriately (bug, feature request, question, etc.)
 
 ---
+
+### 2. Pull Requests
+We welcome pull requests for code improvements, bug fixes, or new features:
+
+1. Fork the repository and create a descriptive branch:
+```bash
+git checkout -b fix-network-boundary
+```
+
+2. Implement your changes and make sure:
