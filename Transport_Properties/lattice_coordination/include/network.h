@@ -496,31 +496,6 @@ __host__ void getNeighborList(network *);
 
 
 /**
- * Calculate physical coordinates of particles on lattice sites
- * 
- * Computes (x, y) Cartesian coordinates for each site based on lattice type.
- * Different lattices have different geometric arrangements.
- * Called during makeNetwork() initialization.
- * 
- * Calls kerGetNetworkCoordinate CUDA kernel
- * 
- * Output:
- *   pN->devPtrX[dim*i + comp] = coordinate component for site i
- * 
- * Coordinate systems:
- *   SQUARE_MOORE: x[i] = DIST * col, y[i] = DIST * row
- *   TRIANGULAR: x[i] = DIST * (col + 0.5*row), y[i] = row * DIST * sqrt(3)/2
- * 
- * Physical interpretation:
- *   - Used in elasticity calculations
- *   - Defines metric (distances between sites)
- *   - Determines bond direction for projection matrices
- * 
- */
-__host__ void getParticlesCoordinate(network *);
-
-
-/**
  * Place active Brownian particles randomly on lattice sites
  * 
  * Uses Fisher-Yates shuffle algorithm to select random unique sites
