@@ -42,34 +42,28 @@ Detailed instructions and model-specific descriptions are provided in the corres
 ## Requirements
 
 ### Hardware
-- NVIDIA GPU with CUDA support  
-  - Compute capability ≥ 6.0 (Ampere GPUs recommended for large systems)
-- Sufficient GPU memory for large-scale simulations (≥ 8 GB recommended)
+- NVIDIA GPU with CUDA support (Compute capability ≥ 6.0; Ampere GPUs recommended)
+- ≥ 8 GB GPU memory recommended for large simulations
 - Multi-core CPU host system
 
 ### Software
-- Linux-based operating system
-- NVIDIA CUDA Toolkit (tested with CUDA ≥ 11.x)
+- Linux-based OS with Bash shell
+- NVIDIA CUDA Toolkit ≥ 11.x
 - Compatible NVIDIA GPU driver
 - Bash-compatible shell environment
-- Standard CUDA/C toolchain:
-  - `nvcc`
-  - `gcc`
-  - `bc` (required for floating-point arithmetic in job scripts)
+- Standard CUDA/C toolchain (`nvcc`, `gcc`, `bc`)
+
+### Execution Environment (Recommended)
+- GPU workstation or HPC cluster
+- Optional job scheduler (SLURM, PBS, etc.)
+- SSH access and filesystem permissions for batch execution
 
 ### Compilation model
 - Simulations are **compiled on-the-fly** to allow parameter-dependent optimization using `nvcc` within the submission script.
 - CUDA architecture flags (`-arch=sm_xx`) may need to be adapted to the target GPU.
 
-### Execution environment (recommended)
-- Access to a GPU workstation or HPC cluster
-- Optional job scheduler (e.g. SLURM, PBS, or equivalent)
-- SSH access and filesystem permissions for batch execution
-
-### Notes
-- The code is written in **CUDA-C** and does not rely on external C++ libraries.
-- Job submission scripts (`submit.sh`) are provided as templates and may require minor adaptation depending on the local system configuration.
-
+<!-- Comentario: Sección importante para que otros puedan reproducir tus resultados. --> 
+<!-- Recomendación: Mantener versiones mínimas y hardware recomendado claros. -->
 ---
 
 ## Scientific scope
@@ -110,8 +104,17 @@ Provided continuous access to GPU cluster resources essential for the developmen
 
 This work was supported by Fundação de Amparo à Pesquisa do Estado de São Paulo (FAPESP) under grants #2024/23876-3, #2021/10139-2, and #2022/13872-5. We also acknowledge support from ICTP‑SAIFR, which is supported by FAPESP grant #2021/14335-0.
 
+<!--Falta el grant de Danilo -->
+
 
 ---
 
+## Citation
+If you use this code in your research, please cite
+
+<!-- Actualizar DOI cuando Zenodo lo genere. -->
+---
+
 ## License
-This project is distributed under the terms specified in the ```LICENSE``` file.
+This project is distributed under the terms of the **GNU General Public License v3.0 (GPL-3.0)**.
+You are free to use, modify, and distribute the software under the conditions of GPL-3.0 (see ```LICENSE``` file).
