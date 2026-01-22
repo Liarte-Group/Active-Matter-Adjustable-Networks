@@ -399,29 +399,3 @@ __host__ void mcStep(network *pN) {
     // Track total number of MC steps executed
     pN -> iter++;
 }
-
-
-__host__ void syncAndCopyToCPU(network *pN) {
-
-    // ========================================================================
-    // Synchronize device and transfer simulation state to host
-    // ========================================================================
-    // Ensure all GPU operations are complete before copying
-    HANDLE_ERROR(cudaDeviceSynchronize());
-
-    // ========================================================================
-    // Copy particle configuration from device to host
-    // ========================================================================
-
-    // Copy site occupancy (which sites are occupied)
-    HANDLE_ERROR(cudaMemcpy(pN -> site, pN -> devPtrSite, pN -> memorySite, cudaMemcpyDeviceToHost));
-
-    // Copy particle positions (which lattice site each particle is at)
-    HANDLE_ERROR(cudaMemcpy(pN -> index, pN -> devPtrIndex, pN -> memoryIndex, cudaMemcpyDeviceToHost));
-
-    // Copy particle directions (which direction each particle faces)
-    HANDLE_ERROR(cudaMemcpy(pN -> direction, pN -> devPtrDirection, pN -> memoryDirection, cudaMemcpyDeviceToHost));
-
-    // Copy bond status on the lattice
-    HANDLE_ERROR(cudaMemcpy(pN -> bond, pN -> devPtrBond, pN -> memoryBond, cudaMemcpyDeviceToHost));
-}

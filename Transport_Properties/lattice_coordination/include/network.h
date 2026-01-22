@@ -368,8 +368,8 @@ typedef struct {
     int *direction;                    // Host copy: particle directions
     int *bond;                         // Host copy: bond states
 
-    double *x;                         // Host copy: particle positions
-    double *x0;                        // Host copy: initial particle positions
+    //double *x;                         // Host copy: particle positions
+    //double *x0;                        // Host copy: initial particle positions
 
     double *shiftDir0;                 // Host copy: horizontal lattice shifts
     double *shiftDir1;                 // Host copy: vertical lattice shifts
@@ -385,8 +385,8 @@ typedef struct {
     int *devPtrNeighbor;               // Neighbor list: neighbor[z*i + dir]
     int *devPtrBond;                   // Bond state: 1=active, 0=broken
 
-    double *devPtrX;                   // Particle positions
-    double *devPtrX0;                  // Initial particle positions
+    //double *devPtrX;                   // Particle positions
+    //double *devPtrX0;                  // Initial particle positions
 
     double *devPtrShiftDir0;           // Horizontal lattice shifts
     double *devPtrShiftDir1;           // Vertical lattice shifts
@@ -673,37 +673,6 @@ __host__ void initCurand(network *);
  * 
  */
 __host__ void mcStep(network *);
-
-
-/**
- * ============================================================================
- * HOST FUNCTION DECLARATIONS - Data Synchronization
- * ============================================================================
- */
-
-/**
- * Synchronize and copy GPU data to CPU memory
- * 
- * Transfers current state of GPU arrays to host (CPU) memory.
- * Necessary before CPU analysis or printing device data.
- * 
- * GPU -> CPU transfers:
- *   - devPtrSite -> site (occupancy)
- *   - devPtrIndex -> index (particle positions)
- *   - devPtrDirection -> direction (particle orientations)
- *   - devPtrBond -> bond (bond states)
- * 
- * Parameters:
- *   pN - pointer to network
- * 
- * Performance:
- *   - D2H transfer (PCIe bandwidth: ~10-20 GB/s)
- *   - ~100-500 μs for typical network size
- *   - Should NOT be called every iteration (use sparingly)
- * 
- */
-__host__ void syncAndCopyToCPU(network *);
-
 
 /**
  * ============================================================================
