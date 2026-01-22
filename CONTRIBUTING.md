@@ -12,10 +12,10 @@ Your contributions help improve reproducibility, performance, and usability for 
 If you find bugs, unexpected behavior, or have feature requests:
 - Use [GitHub Issues](https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks/issues).
 - Include:
-        - A clear description of the problem or suggestion
-        - Steps to reproduce
-        - System specifications (OS, GPU, CUDA version)
-        - Relevant error messages or logs
-    - Label the issue appropriately (bug, feature request, question, etc.)
+    - A clear description of the problem or suggestion
+    - Steps to reproduce
+    - System specifications (OS, GPU, CUDA version)
+    - Relevant error messages or logs
+- Label the issue appropriately (bug, feature request, question, etc.)
 
 ---
