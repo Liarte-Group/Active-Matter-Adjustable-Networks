@@ -20,6 +20,8 @@ The repository is organized into **article-specific directories**. Each director
 ```text
 .
 ├── README.md
+├── ACKNOWLEDGEMENTS.md
+├── CONTRIBUTING.md
 ├── LICENSE
 ├── Transport_Properties/
 │   ├── lattice_coordination/
