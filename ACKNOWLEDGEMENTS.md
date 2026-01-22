@@ -10,8 +10,10 @@ We also acknowledge support from **ICTP-SAIFR**, which is supported by FAPESP Gr
 
 ---
 
-We thank all collaborators and staff at ICTP-SAIFR for providing computational resources, guidance, and support during this research.
+We thank **Prof. André P. Vieira** for providing continuous access to GPU cluster resources essential for the development, testing, and large-scale execution of the simulations.
 
 ---
 
 *Note:* The numbers above correspond to official FAPESP grant IDs. Proper acknowledgment of these grants is required by FAPESP policy for publications and repository releases.
+
+<!--Falta el grant de Danilo -->

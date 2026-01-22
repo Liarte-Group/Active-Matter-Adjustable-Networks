@@ -96,26 +96,6 @@ Main developer and author of the code. Responsible for the design, implementatio
 
 Provided key scientific ideas and conceptual guidance that strongly influenced the development of the models and numerical strategies implemented in this framework.
 
-### Computational Support
-- **André P. Vieira**
-
-Provided continuous access to GPU cluster resources essential for the development, testing, and large-scale execution of the simulations.
-
----
-
-## Acknowledgements
-
-This work was supported by Fundação de Amparo à Pesquisa do Estado de São Paulo (FAPESP) under Grants:
- - 2024/23876-3
- - 2021/10139-2
- - 2022/13872-5
- - `Danilo Grant`
-
-We also acknowledge support from ICTP‑SAIFR, which is supported by FAPESP Grant 2021/14335-0.
-
-<!--Falta el grant de Danilo -->
-
-
 ---
 
 ## Citation
