@@ -22,6 +22,8 @@ This project intentionally recompiles the code for each parameter set. Physical 
 5. [Compilation Flags](#compilation-flags)
 6. [Practical Examples](#practical-examples)
 7. [Troubleshooting](#troubleshooting)
+8. [Post-Compilation Verification](#post-compilation-verification)
+9. [Additional Resources](#additional-resources)
 
 ---
 
