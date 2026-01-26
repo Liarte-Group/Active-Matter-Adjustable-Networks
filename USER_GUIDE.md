@@ -62,7 +62,7 @@ gcc --version
 ## 📁 Project Structure
 
 ```
-Transport_Properties/<project>
+Transport_Properties/<project>/
 ├── submit.sh                    ← Main script
 ├── main.cu                      ← Main CUDA kernel
 ├── src/
