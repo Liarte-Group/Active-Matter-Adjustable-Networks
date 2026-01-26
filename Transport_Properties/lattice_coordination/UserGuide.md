@@ -75,7 +75,7 @@ gcc --version
 ## 📁 Project Structure
 
 ```
-project/
+Transport_Properties/
 ├── submit.sh                    ← Main script
 ├── main.cu                      ← Main CUDA kernel
 ├── src/
@@ -83,7 +83,7 @@ project/
 │   └── network_kernels.cu       ← Additional CUDA kernels
 ├── include/
 │   ├── network.h                ← Network headers
-│   └── (other headers)
+│   └── config.h
 ├── a.out                        ← Compiled executable (generated)
 └── Realization_X/               ← Output directory (generated)
 ```
