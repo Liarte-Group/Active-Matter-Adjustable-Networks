@@ -356,23 +356,6 @@ nvcc -O3 -arch=sm_86 \
 
 ---
 
-### Example 7: Compilation with Multiple Architectures
-```bash
-# Compile for multiple architectures
-nvcc -gencode arch=compute_80,code=sm_80 \
-     -gencode arch=compute_86,code=sm_86 \
-     -Iinclude \
-     -DLATTICE_TYPE=TRIANGULAR \
-     -DLX=512 \
-     -Xcompiler -Wall,-Wextra \
-     main.cu src/network.cu src/network_kernels.cu \
-     -lcurand -o simulation_multi
-```
-
-**When to use**: Portable executable for multiple GPUs
-
----
-
 ## 🔴 Troubleshooting
 
 ### ❌ Error: "nvcc: command not found"
