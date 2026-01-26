@@ -60,8 +60,8 @@ export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
 source ~/.bashrc  # or source ~/.zshrc
 ```
 
-### 3. C++ Compiler
-NVCC requires a compatible C++ compiler:
+### 3. C Compiler
+NVCC requires a compatible C compiler:
 
 ```bash
 # Check GCC
