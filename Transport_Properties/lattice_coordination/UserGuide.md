@@ -36,3 +36,15 @@ export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
 No manual setup is required unless CUDA is installed in a non-standard location.
 
 ---
+
+## 3. Compilation Strategy
+
+Compilation is handled internally by the execution script (`submith.sh`).
+For each simulation, the program is compiled using `nvcc` with simulation parameters injected via `-D` flags.
+
+This design guarantees:
+ - Full reproducibility
+ - No ambiguity between runtime input and compiled physics
+ - One binary per parameter set
+
+ ---
