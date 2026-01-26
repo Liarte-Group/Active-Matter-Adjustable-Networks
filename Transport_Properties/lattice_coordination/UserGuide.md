@@ -129,10 +129,10 @@ If you need to compile manually (for debugging or testing):
 
 ### Basic Compilation
 ```bash
-nvcc -arch=sm_86 main.cu src/network.cu src/network_kernels.cu -lcurand
+nvcc -arch=sm_86 -Iinclude main.cu src/network.cu src/network_kernels.cu -lcurand
 ```
 
-### With Warnings and Includes
+### With Warnings
 ```bash
 nvcc -arch=sm_86 \
   -Iinclude \
