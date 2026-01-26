@@ -2,7 +2,7 @@
 
 This document describes how the program is **compiled using CUDA (`nvcc`)**, including required dependencies, compile-time parameters, and GPU architecture settings. 
 
-**Project**: `./Transport_Properties/<name>/` 
+**Project**: `./Transport_Properties/<name>/`
 **Language**: CUDA-C
 **Compiler**: NVCC (NVIDIA CUDA Compiler)  
 **Architecture**: Ampere (sm_86)  
