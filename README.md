@@ -70,6 +70,7 @@ Main developer and author of the code. Responsible for the design, implementatio
 
 Provided key scientific ideas and conceptual guidance that strongly influenced the development of the models and numerical strategies implemented in this framework.
 
+**Note:** This project's documentation (Markdown guides, user manuals, and compilation guides) was created with assistance from Claude AI (Anthropic). All content has been reviewed and validated by the development team. The core simulation code, scientific methodology, and research approach are authored by William G. C. Oropesa and the Liarte-Group.
 ---
 
 ## Citation
