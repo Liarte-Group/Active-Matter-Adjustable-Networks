@@ -13,20 +13,6 @@ This project intentionally recompiles the code for each parameter set. Physical 
 
 ---
 
-## 📋 Table of Contents
-
-1. [Prerequisites](#prerequisites)
-2. [Project Structure](#project-structure)
-3. [Automatic Compilation](#automatic-compilation)
-4. [Manual Compilation](#manual-compilation)
-5. [Compilation Flags](#compilation-flags)
-6. [Practical Examples](#practical-examples)
-7. [Troubleshooting](#troubleshooting)
-8. [Post-Compilation Verification](#post-compilation-verification)
-9. [Additional Resources](#additional-resources)
-
----
-
 ## 🔧 Prerequisites
 
 ### 1. CUDA Toolkit Installed
