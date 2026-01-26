@@ -10,7 +10,7 @@
  *   - Network topology representation (neighbors, bonds, sites)
  *   - Particle management (positions, directions, occupancy)
  *   - Random number generation (cuRAND integration)
- *   - Lattice geometry (coordinates, boundaries)
+ *   - Lattice geometry (coordinates)
  * 
  * Key features:
  *   - Support for multiple lattice types (square Moore, triangular)
@@ -23,13 +23,12 @@
  *   2. Initialize geometry: getNeighborList(), getNetworkCoordinate(), etc.
  *   3. Place particles: putABPOnNetwork()
  *   4. Set RNG: initCurand()
- *   5. Simulate: mcSteps(net, nSteps) in a loop
- *   6. Clean up: destroyNetwork()
+ *   5. Clean up: destroyNetwork()
  * 
- * Author: William G. C. Oropesa
+ * Author: William G. C. Oropesa (Liarte-Group)
  * Institution: ICTP South American Institute for Fundamental Research
- * GitHub Repository: TODO
- * Date: TODO
+ * GitHub Repository: https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks
+ * Date: January 2026
  * ============================================================================
  */
 
@@ -152,76 +151,72 @@ typedef enum {
  *   ═══════════════════════════════════════════════════════════════════
  *   
  *   size_t memorySite
- *     Size: N * sizeof(int) bytes
- *     Purpose: Track allocation size for site arrays
- *     Use: Memory management, validation
+ *    - Size: N * sizeof(int) bytes
+ *    - Purpose: Track allocation size for site arrays
+ *    - Use: Memory management, validation
  *   
  *   size_t memoryBoundary
- *     Size: N * sizeof(int) bytes
- *     Purpose: Track allocation for boundary markers
- *     Use: Memory cleanup, checks
+ *    - Size: N * sizeof(int) bytes
+ *    - Purpose: Track allocation for boundary markers
+ *    - Use: Memory cleanup, checks
  *   
  *   size_t memoryIndex
- *     Size: nParticles * sizeof(int) bytes
- *     Purpose: Track allocation for particle indices
- *     Use: Memory management
+ *    - Size: nParticles * sizeof(int) bytes
+ *    - Purpose: Track allocation for particle indices
+ *    - Use: Memory management
  *   
  *   size_t memoryDirection
- *     Size: nParticles * sizeof(int) bytes
- *     Purpose: Track allocation for particle directions
- *     Use: Memory management
+ *    - Size: nParticles * sizeof(int) bytes
+ *    - Purpose: Track allocation for particle directions
+ *    - Use: Memory management
  *   
  *   size_t memoryNeighbor
- *     Size: N * z * sizeof(int) bytes
- *     Purpose: Track neighbor list allocation
- *     Use: Memory management, validation
+ *    - Size: N * z * sizeof(int) bytes
+ *    - Purpose: Track neighbor list allocation
+ *    - Use: Memory management, validation
  *   
  *   size_t memoryBond
- *     Size: N * z * sizeof(int) bytes
- *     Purpose: Track bond state allocation
- *     Use: Memory management
+ *    - Size: N * z * sizeof(int) bytes
+ *    - Purpose: Track bond state allocation
+ *    - Use: Memory management
  *   
  *   size_t memoryCurandStatesBond
- *     Size: N * z * sizeof(curandState) bytes
- *     Purpose: Track RNG state allocation for bonds
- *     Use: Memory cleanup
+ *    - Size: N * z * sizeof(curandState) bytes
+ *    - Purpose: Track RNG state allocation for bonds
+ *    - Use: Memory cleanup
  *   
  *   size_t memoryCurandStatesSite
- *     Size: N * sizeof(curandState) bytes
- *     Purpose: Track RNG state allocation for sites
- *     Use: Memory cleanup
+ *    - Size: N * sizeof(curandState) bytes
+ *    - Purpose: Track RNG state allocation for sites
+ *    - Use: Memory cleanup
  * 
  *   ═══════════════════════════════════════════════════════════════════
  *   HOST MEMORY ARRAYS (CPU side, slower but directly accessible)
  *   ═══════════════════════════════════════════════════════════════════
  *   
  *   int *site
- *     Size: N integers
- *     Purpose: Occupancy state (1=occupied by particle, 0=empty)
- *     Access: CPU direct read/write
- *     Update: Via syncAndCopyToCPU() from devPtrSite
- *     Use: Data analysis, debugging, particle enumeration
+ *    - Size: N integers
+ *    - Purpose: Occupancy state (1=occupied by particle, 0=empty)
+ *    - Access: CPU direct read/write
+ *    - Use: Data analysis, debugging, particle enumeration
  *   
  *   int *index
- *     Size: nParticles integers
- *     Purpose: Maps particle ID → current lattice site index
- *     Access: CPU direct read/write
- *     Update: Via syncAndCopyToCPU() from devPtrIndex
- *     Use: Particle tracking, position queries
+ *    - Size: nParticles integers
+ *    - Purpose: Maps particle ID → current lattice site index
+ *    - Access: CPU direct read/write
+ *    - Use: Particle tracking, position queries
  *   
  *   int *direction
- *     Size: nParticles integers
- *     Purpose: Current direction [0, z-1] for each particle
- *     Access: CPU direct read/write
- *     Update: Via syncAndCopyToCPU() from devPtrDirection
- *     Use: Direction analysis, particle state inspection
+ *    - Size: nParticles integers
+ *    - Purpose: Current direction [0, z-1] for each particle
+ *    - Access: CPU direct read/write
+ *    - Use: Direction analysis, particle state inspection
  *   
  *   int *bond
- *     Size: N*z integers
- *     Purpose: Bond state array (1=active, 0=broken/removed)
- *     Access: CPU direct read/write
- *     Update: Via syncAndCopyToCPU() from devPtrBond
- *     Use: Bond statistics, network connectivity analysis
+ *    - Size: N*z integers
+ *    - Purpose: Bond state array (1=active, 0=broken/removed)
+ *    - Access: CPU direct read/write
+ *    - Use: Bond statistics, network connectivity analysis
  *   
  * 
  *   ═══════════════════════════════════════════════════════════════════
@@ -231,133 +226,114 @@ typedef enum {
  *   PARTICLE AND OCCUPANCY ARRAYS:
  *   
  *   int *devPtrSite
- *     Size: N integers
- *     Purpose: Occupancy state on GPU (1=occupied, 0=empty)
- *     Access: GPU kernels (atomicCAS, atomicExch, etc.)
- *     Update: updateParticles kernel modifies
- *     Use: Fast particle movement, concurrent access
+ *    - Size: N integers
+ *    - Purpose: Occupancy state on GPU (1=occupied, 0=empty)
+ *    - Access: GPU kernels (atomicCAS, atomicExch, etc.)
+ *    - Update: updateParticles kernel modifies
+ *    - Use: Fast particle movement, concurrent access
  *   
  *   int *devPtrIndex
- *     Size: nParticles integers
- *     Purpose: Particle ID → site index mapping on GPU
- *     Access: GPU kernels read/write
- *     Update: updateParticles kernel modifies
- *     Use: Particle position tracking during MC steps
+ *    - Size: nParticles integers
+ *    - Purpose: Particle ID → site index mapping on GPU
+ *    - Access: GPU kernels read/write
+ *    - Update: updateParticles kernel modifies
+ *    - Use: Particle position tracking during MC steps
  *   
  *   int *devPtrDirection
- *     Size: nParticles integers
- *     Purpose: Particle direction [0, z-1] on GPU
- *     Access: GPU kernels read/write
- *     Update: updateParticles kernel modifies
- *     Use: Direction updates, persistence physics
+ *    - Size: nParticles integers
+ *    - Purpose: Particle direction [0, z-1] on GPU
+ *    - Access: GPU kernels read/write
+ *    - Update: updateParticles kernel modifies
+ *    - Use: Direction updates, persistence physics
  *   
  *   NETWORK TOPOLOGY:
- *   
- *   int *devPtrBoundary
- *     Size: N integers (1=boundary site, 0=interior)
- *     Purpose: Marks which sites are at lattice edges
- *     Access: GPU kernels read (not modified after init)
- *     Update: getBoundary kernel sets, then constant
- *     Use: Apply boundary conditions, exclude surface sites
- *   
+ * 
  *   int *devPtrNeighbor
- *     Size: N*z integers
- *     Purpose: Neighbor connectivity list
- *     Layout: neighbor[z*i + dir] = index of neighbor at direction dir
- *     Access: GPU kernels read (not modified after init)
- *     Update: getNeighborList kernel sets, then constant
- *     Use: Particle movement, bond interactions
+ *    - Size: N*z integers
+ *    - Purpose: Neighbor connectivity list
+ *    - Layout: neighbor[z*i + dir] = index of neighbor at direction dir
+ *    - Access: GPU kernels read (not modified after init)
+ *    - Update: getNeighborList kernel sets, then constant
+ *    - Use: Particle movement, bond interactions
  *   
  *   int *devPtrBond
- *     Size: N*z integers (1=active, 0=broken)
- *     Purpose: Bond state determines particle passage
- *     Access: GPU kernels read/write (atomic operations)
- *     Update: updateParticles removes bonds; updateBonds regenerates
- *     Use: Stochastic bond dynamics, network connectivity
+ *    - Size: N*z integers (1=active, 0=broken)
+ *    - Purpose: Bond state determines particle passage
+ *    - Access: GPU kernels read/write (atomic operations)
+ *    - Update: updateParticles removes bonds; updateBonds regenerates
+ *    - Use: Stochastic bond dynamics, network connectivity
  *   
  *   ═══════════════════════════════════════════════════════════════════
  *   LATTICE AND SIMULATION PARAMETERS
  *   ═══════════════════════════════════════════════════════════════════
  *   
  *   int z
- *     Purpose: Coordination number (neighbors per site)
- *     Values: 8 (SQUARE_MOORE), 6 (TRIANGULAR)
- *     Set by: makeNetwork() based on lattice type
- *     Use: Loop bounds in kernels, memory allocation sizes
+ *    - Purpose: Coordination number (neighbors per site)
+ *    - Values: 8 (SQUARE_MOORE), 6 (TRIANGULAR)
+ *    - Set by: makeNetwork() based on lattice type
+ *    - Use: Loop bounds in kernels, memory allocation sizes
  *   
  *   int dim
- *     Purpose: Spatial dimensionality
- *     Values: Typically 2 (2D systems)
- *     Set by: Configuration or makeNetwork() parameter
- *     Use: Vector sizing, coordinate computations
+ *    - Purpose: Spatial dimensionality
+ *    - Values: Typically 2 (2D systems)
+ *    - Set by: Configuration or makeNetwork() parameter
+ *    - Use: Vector sizing, coordinate computations
  *   
  *   int iter
- *     Purpose: Global iteration counter
- *     Values: Incremented by mcSteps()
- *     Use: Simulation progress tracking, data collection timing
+ *    - Purpose: Global iteration counter
+ *    - Values: Incremented by mcSteps()
+ *    - Use: Simulation progress tracking, data collection timing
  *   
  *   unsigned long seed
- *     Purpose: Random number generator seed for reproducibility
- *     Set by: makeNetwork() or externally before initCurand()
- *     Use: setupCurandState kernel initialization
+ *    - Purpose: Random number generator seed for reproducibility
+ *    - Set by: makeNetwork() or externally before initCurand()
+ *    - Use: setupCurandState kernel initialization
  *   
  *   double pack
- *     Purpose: Packing fraction (fraction of sites occupied by particles)
- *     Range: 0.0 (empty) to 1.0 (full)
- *     Example: pack = 0.5 means 50% of sites have particles
- *     Use: Initialize particle density, system characterization
+ *    - Purpose: Packing fraction (fraction of sites occupied by particles)
+ *    - Range: 0.0 (empty) to 1.0 (full)
+ *    - Example: pack = 0.5 means 50% of sites have particles
+ *    - Use: Initialize particle density, system characterization
  *   
  *   double pPerst
- *     Purpose: Persistence probability (probability particle maintains direction)
- *     Range: 0.0 to 1.0
- *     Example: pPerst = 0.9 means 90% chance particle keeps direction
- *     Use: updateParticles kernel, controls particle rotational freedom
+ *    - Purpose: Persistence probability (probability particle maintains direction)
+ *    - Range: 0.0 to 1.0
+ *    - Example: pPerst = 0.9 means 90% chance particle keeps direction
+ *    - Use: updateParticles kernel, controls particle rotational freedom
  *   
  *   double pRegen
- *     Purpose: Bond regeneration probability
- *     Range: 0.0 to 1.0
- *     Example: pRegen = 0.5 means 50% chance broken bond repairs
- *     Use: updateBonds kernel, controls bond dynamics
+ *    - Purpose: Bond regeneration probability
+ *    - Range: 0.0 to 1.0
+ *    - Example: pRegen = 0.5 means 50% chance broken bond repairs
+ *    - Use: updateBonds kernel, controls bond dynamics
  *   
  *   int nParticles
- *     Purpose: Total number of active Brownian particles
- *     Values: nParticles = pack * N
- *     Computed by: putABPOnNetwork()
- *     Use: Particle loop bounds, array sizing
+ *    - Purpose: Total number of active Brownian particles
+ *    - Values: nParticles = pack * N
+ *    - Computed by: putABPOnNetwork()
+ *    - Use: Particle loop bounds, array sizing
  *   
  *   LatticeType type
- *     Purpose: Lattice geometry type
- *     Values: SQUARE_MOORE (z=8), TRIANGULAR (z=6)
- *     Set by: makeNetwork() parameter
- *     Use: Kernel selection, geometry computation
+ *    - Purpose: Lattice geometry type
+ *    - Values: SQUARE_MOORE (z=8), TRIANGULAR (z=6)
+ *    - Set by: makeNetwork() parameter
+ *    - Use: Kernel selection, geometry computation
  * 
  *   ═══════════════════════════════════════════════════════════════════
  *   RANDOM NUMBER GENERATION STATE
  *   ═══════════════════════════════════════════════════════════════════
  *   
  *   curandState *devPtrCurandStatesBond
- *     Size: N*z states (one per bond, one per direction)
- *     Purpose: Independent RNG state for each bond
- *     Use: Bond regeneration stochasticity (updateBonds kernel)
- *     Init: setupCurandState kernel sets unique sequence per state
+ *    - Size: N*z states (one per bond, one per direction)
+ *    - Purpose: Independent RNG state for each bond
+ *    - Use: Bond regeneration stochasticity (updateBonds kernel)
+ *    - Init: setupCurandState kernel sets unique sequence per state
  *   
  *   curandState *devPtrCurandStatesSite
- *     Size: N states (one per lattice site)
- *     Purpose: Independent RNG state for each site/particle
- *     Use: Particle movement and direction stochasticity (updateParticles kernel)
- *     Init: setupCurandState kernel sets unique sequence per state
- * 
- * Memory footprint estimation (for N sites, dim=2, z=6):
- *   
- *   Device memory:
- *     Particle/occupancy: 4*N (site) + 4*nParticles (index, direction) ≈ 8*N bytes
- *     Topology: 4*N (boundary) + 4*6*N (neighbor) + 4*6*N (bond) = 52*N bytes
- *     Elasticity: 8*2*N (u, du, b) + 8*2*N (x: coordinates) = 32*N bytes
- *     RNG: sizeof(curandState)*7*N ≈ 56*N bytes (large!)
- *     Total: ~148*N bytes (dominated by RNG)
- *   
- *   For N = 100,000:
- *     Total ≈ TODO MB (fits easily on modern GPUs with GBs)
+ *    - Size: N states (one per lattice site)
+ *    - Purpose: Independent RNG state for each site/particle
+ *    - Use: Particle movement and direction stochasticity (updateParticles kernel)
+ *    - Init: setupCurandState kernel sets unique sequence per state
  * 
  * Thread safety:
  *   - Host arrays: Single-threaded access only
@@ -488,20 +464,6 @@ typedef struct {
  *   GPU: ~148*N bytes (see network structure documentation)
  *   CPU: Temporary during initialization, then ~40*N bytes for host copies
  * 
- * Example usage:
- *   
- *   // Create triangular lattice with 50% packing
- *   network *net = makeNetwork(TRIANGULAR, 2, 0.5, 0.8, 0.5);
- *   
- *   // Use network for simulation
- *   mcSteps(net, 1000);  // Run 1000 MC steps
- *   
- *   // Clean up
- *   destroyNetwork(net);
- * 
- * See also:
- *   - destroyNetwork(): Free memory
- *   - getNeighborList(), getNetworkCoordinate(), etc.: Initialization
  */
 __host__ network *makeNetwork(LatticeType, const int, const double, const double, const double);
 
@@ -736,54 +698,6 @@ __host__ void initCurand(network *);
  */
 __host__ void mcStep(network *);
 
-
-/**
- * ============================================================================
- * HOST FUNCTION DECLARATIONS - Data Synchronization
- * ============================================================================
- */
-
-/**
- * Synchronize and copy GPU data to CPU memory
- * 
- * Transfers current state of GPU arrays to host (CPU) memory.
- * Necessary before CPU analysis or printing device data.
- * 
- * GPU → CPU transfers:
- *   - devPtrSite → site (occupancy)
- *   - devPtrIndex → index (particle positions)
- *   - devPtrDirection → direction (particle orientations)
- *   - devPtrBond → bond (bond states)
- * 
- * Parameters:
- *   pN - pointer to network
- * 
- * Performance:
- *   - D2H transfer (PCIe bandwidth: ~10-20 GB/s)
- *   - ~100-500 μs for typical network size
- *   - Should NOT be called every iteration (use sparingly)
- * 
- * Example usage:
- *   
- *   // Simulate
- *   mcSteps(net, 1000);
- *   
- *   // Analyze on CPU
- *   syncAndCopyToCPU(net);
- *   
- *   // Now can directly access host arrays
- *   for (int i = 0; i < N; i++) {
- *       if (net->site[i] == 1) {
- *           // Site occupied, analyze particle
- *       }
- *   }
- * 
- * See also:
- *   - printDU(): Debug output using CPU data
- */
-__host__ void syncAndCopyToCPU(network *);
-
-
 /**
  * ============================================================================
  * DEVICE KERNEL DECLARATIONS - Geometry
@@ -796,14 +710,6 @@ __host__ void syncAndCopyToCPU(network *);
  * See getNeighborList() for documentation
  */
 __global__ void kerGetNeighborList(int *, int, LatticeType);
-
-/**
- * Device kernel: Calculate site coordinates
- * Host wrapper: getNetworkCoordinate()
- * See getNetworkCoordinate() for documentation
- */
-__global__ void kerGetNetworkCoordinate(double *, int, LatticeType);
-
 
 /**
  * ============================================================================
@@ -899,20 +805,6 @@ __global__ void updateBonds(int *, int *, int, curandState *);
  *   bond - bond state array (read-only)
  *   z - coordination number
  *   zMean - output accumulator on GPU
- * 
- * Result:
- *   *zMean = total active bonds
- *   Mean z = *zMean / N
- * 
- * Example usage:
- *   
- *   double *devZMean;
- *   cudaMalloc(&devZMean, sizeof(double));
- *   getMeanCoordinationNumber<<<blocks, threads>>>(bond, z, devZMean);
- *   
- *   double hostZMean;
- *   cudaMemcpy(&hostZMean, devZMean, sizeof(double), cudaMemcpyDeviceToHost);
- *   double meanZ = hostZMean / N;
  */
 __global__ void getMeanCoordinationNumber(const int *, const int, double *);
 
@@ -1011,24 +903,6 @@ __global__ void getInitialCoordinates(double *, double *, int, int);
  * 
  * Output:
  *   pN -> devPtrX0: set equal to pN -> devPtrX
- * 
- * Typical workflow:
- *   
- *   // Equilibrate system
- *   mcSteps(net, 100000);
- *   
- *   // Reset displacement reference
- *   storeCoordinates(net);
- *   
- *   // Now measure MSD from this point
- *   for (int t = 0; t < 1000; t++) {
- *       mcStep(net);
- *       updateMSD(net);
- *   }
- * 
- * See also:
- *   - getInitialCoordinates: Device kernel
- *   - updateMSD: Measures displacement from x0
  */
 __host__ void storeCoordinates(network *);
 

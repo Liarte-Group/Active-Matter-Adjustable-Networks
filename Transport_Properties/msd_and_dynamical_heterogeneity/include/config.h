@@ -14,18 +14,13 @@
  *   - Active particle dynamics (persistence, regeneration)
  *   - Monte Carlo simulation parameters
  *   - CUDA execution configuration
- *   - Visualization (OpenGL) settings
- *   - Color palette definitions
- *
  * All parameters can be overridden at compile time using -D flags.
  *
- * Reference:
- *   Active Matter on Adjustable Networks I: Transport Properties
  *
- * Author: William G. C. Oropesa
+ * Author: William G. C. Oropesa (Liarte-Group)
  * Institution: ICTP South American Institute for Fundamental Research
- * GitHub Repository: ....
- * Date: ....
+ * GitHub Repository: https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks
+ * Date: January 2026
  * ============================================================================
  */
 
