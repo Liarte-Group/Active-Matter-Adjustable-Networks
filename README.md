@@ -30,7 +30,7 @@ The repository is organized into **article-specific directories**. Each director
 │   ├── non_steric_interactions/
 │   └── stopping_class/
 ```
-Each study directory in `Transport_Properties/` (project) follows the same internal structure:
+Each study directory in `Transport_Properties/<project>/` follows the same internal structure:
 
 ```text
 ├── main.cu        # Main CUDA entry point
