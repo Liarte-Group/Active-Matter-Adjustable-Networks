@@ -41,34 +41,6 @@ Each study directory follows the same internal structure:
 ```
 Detailed instructions and model-specific descriptions are provided in the corresponding local ```UserGuide.md``` files.
 
----
-
-## Requirements
-
-### Hardware
-- NVIDIA GPU with CUDA support (Compute capability ≥ 6.0; Ampere GPUs recommended)
-- ≥ 8 GB GPU memory recommended for large simulations
-- Multi-core CPU host system
-
-### Software
-- Linux-based OS with Bash shell
-- NVIDIA CUDA Toolkit ≥ 11.x
-- Compatible NVIDIA GPU driver
-- Bash-compatible shell environment
-- Standard CUDA/C toolchain (`nvcc`, `gcc`, `bc`)
-
-### Execution Environment (Recommended)
-- GPU workstation or HPC cluster
-- Optional job scheduler (SLURM, PBS, etc.)
-- SSH access and filesystem permissions for batch execution
-
-### Compilation model
-- Simulations are **compiled on-the-fly** to allow parameter-dependent optimization using `nvcc` within the submission script.
-- CUDA architecture flags (`-arch=sm_xx`) may need to be adapted to the target GPU.
-
-<!-- Comentario: Sección importante para que otros puedan reproducir tus resultados. --> 
-<!-- Recomendación: Mantener versiones mínimas y hardware recomendado claros. -->
----
 
 ## Scientific scope
 The current implementation focuses on the **transport properties** of ABPs in dynamically rearranging networks. In particular, the code allows one to investigate how stochastic network remodeling affects:
