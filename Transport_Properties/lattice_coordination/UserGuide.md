@@ -5,9 +5,6 @@ This document describes how the program is **compiled using CUDA (`nvcc`)**, inc
 ⚠️ **Important:**  
 This project intentionally recompiles the code for each parameter set. Physical and numerical parameters are passed at **compile time** via preprocessor macros to ensure strict reproducibility and a one-to-one correspondence between simulation parameters and the generated binary.
 
----
-
-# CUDA Compilation Guide
 
 **Project**: Coordination Number Measurement  
 **Language**: CUDA C++  
