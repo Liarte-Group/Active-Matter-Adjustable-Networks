@@ -9,21 +9,18 @@
 # Workflow:
 #   1. Setup CUDA environment
 #   2. Validate command-line arguments
-#   3. Parse parameters (LATTICE_TYPE, LX, HT)
-#   4. Define parameter sweeps (PT values and packing fractions)
-#   5. For each realization:
+#   3. Parse parameters (LATTICE_TYPE, LX, HT, PT, PACKING_FRACTION)
+#   4. For each realization:
 #      - Create output directory
-#      - For each parameter combination:
-#        - Calculate derived parameters (P_PERST, P_REGEN)
-#        - Compile and execute simulation
-#        - Save results to file
-#      - Organize output files
-#   6. Report completion
+#      - Calculate derived parameters (P_PERST, P_REGEN)
+#      - Compile and execute simulation
+#      - Save results to file
+#   5. Report completion
 #
 # Author: William G. C. Oropesa
 # Institution: ICTP South American Institute for Fundamental Research
-# GitHub Repository: ....
-# Date: ....
+# GitHub Repository: https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks
+# Date: January 2026
 ################################################################################
 
 # ============================================================================
@@ -47,7 +44,7 @@ export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
 export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 
 echo -e "${MAGENTA}${BOLD}============================================================================${NC}"
-echo -e "${MAGENTA}${BOLD}Active Brownian Particles on Adjustable Networks - Batch Simulation${NC}"
+echo -e "${MAGENTA}${BOLD}Active Brownian Particles on Adjustable Networks - Single Simulation${NC}"
 echo -e "${MAGENTA}${BOLD}============================================================================${NC}\n"
 
 # ============================================================================
@@ -78,7 +75,7 @@ echo -e "${CYAN}[TIMESTAMP]${NC} Simulation batch ID: ${BOLD}${timestamp}${NC}\n
 # ============================================================================
 # STEP 4: Parse and validate command-line arguments
 # ============================================================================
-echo -e "${BLUE}[INFO]${NC} Parsing command-line arguments..."
+echo -e "${BLUE}[INFO]${NC} Parsing command-line arguments...\n"
 
 # ========================================================================
 # Parameter 1: Lattice type (default: TRIANGULAR)
@@ -86,8 +83,8 @@ echo -e "${BLUE}[INFO]${NC} Parsing command-line arguments..."
 LATTICE=${1:-"TRIANGULAR"}
 if [[ "$LATTICE" != "SQUARE_MOORE" && "$LATTICE" != "TRIANGULAR" ]]; then
     echo -e "${RED}[ERROR]${NC} Invalid lattice type: $LATTICE"
-    echo -e "${YELLOW}[USAGE]${NC} ./submit.sh [LATTICE_TYPE] [LX] [HT]"
-    echo -e "${YELLOW}        LATTICE_TYPE: SQUARE_MOORE or TRIANGULAR (default: TRIANGULAR)${NC}"
+    echo -e "${YELLOW}[USAGE]${NC} ./submit.sh [LATTICE_TYPE] [LX] [HT] [PT] [PACKING_FRACTION]"
+    echo -e "${YELLOW}[EXAMPLE]${NC} ./submit.sh TRIANGULAR 64 20.0 256 0.128"
     exit 1
 fi
 echo -e "${GREEN}[OK]${NC} Lattice type: ${BOLD}${LATTICE}${NC}"
@@ -98,7 +95,7 @@ echo -e "${GREEN}[OK]${NC} Lattice type: ${BOLD}${LATTICE}${NC}"
 LX=${2:-64}
 if ! [[ "$LX" =~ ^[0-9]+$ ]] || [ "$LX" -lt 16 ]; then
     echo -e "${RED}[ERROR]${NC} Invalid LX value: $LX (must be integer >= 16)"
-    echo -e "${YELLOW}[USAGE]${NC} ./submit.sh [LATTICE_TYPE] [LX] [HT]"
+    echo -e "${YELLOW}[USAGE]${NC} ./submit.sh [LATTICE_TYPE] [LX] [HT] [PT] [PACKING_FRACTION]"
     exit 1
 fi
 N=$((LX * LX))
@@ -110,10 +107,32 @@ echo -e "${GREEN}[OK]${NC} Lattice size: ${BOLD}${LX} × ${LX} = ${N} sites${NC}
 HT=${3:-20.0}
 if ! [[ "$HT" =~ ^[0-9]+\.?[0-9]*$ ]] || (( $(echo "$HT <= 0" | bc -l) )); then
     echo -e "${RED}[ERROR]${NC} Invalid HT value: $HT (must be positive number)"
-    echo -e "${YELLOW}[USAGE]${NC} ./submit.sh [LATTICE_TYPE] [LX] [HT]"
+    echo -e "${YELLOW}[USAGE]${NC} ./submit.sh [LATTICE_TYPE] [LX] [HT] [PT] [PACKING_FRACTION]"
     exit 1
 fi
-echo -e "${GREEN}[OK]${NC} Healing time: ${BOLD}${HT}${NC}\n"
+echo -e "${GREEN}[OK]${NC} Healing time: ${BOLD}${HT}${NC}"
+
+# ========================================================================
+# Parameter 4: Persistence time (default: 256)
+# ========================================================================
+PT=${4:-256}
+if ! [[ "$PT" =~ ^[0-9]+\.?[0-9]*$ ]] || (( $(echo "$PT <= 0" | bc -l) )); then
+    echo -e "${RED}[ERROR]${NC} Invalid PT value: $PT (must be positive number)"
+    echo -e "${YELLOW}[USAGE]${NC} ./submit.sh [LATTICE_TYPE] [LX] [HT] [PT] [PACKING_FRACTION]"
+    exit 1
+fi
+echo -e "${GREEN}[OK]${NC} Persistence time: ${BOLD}${PT}${NC}"
+
+# ========================================================================
+# Parameter 5: Packing fraction (default: 0.128)
+# ========================================================================
+PACKING_FRACTION=${5:-0.128}
+if ! [[ "$PACKING_FRACTION" =~ ^[0-9]+\.?[0-9]*$ ]] || (( $(echo "$PACKING_FRACTION <= 0" | bc -l) )) || (( $(echo "$PACKING_FRACTION > 1" | bc -l) )); then
+    echo -e "${RED}[ERROR]${NC} Invalid PACKING_FRACTION value: $PACKING_FRACTION (must be between 0 and 1)"
+    echo -e "${YELLOW}[USAGE]${NC} ./submit.sh [LATTICE_TYPE] [LX] [HT] [PT] [PACKING_FRACTION]"
+    exit 1
+fi
+echo -e "${GREEN}[OK]${NC} Packing fraction: ${BOLD}${PACKING_FRACTION}${NC}\n"
 
 # ============================================================================
 # STEP 5: Configure CUDA compilation
@@ -136,14 +155,16 @@ echo -e "  ${CYAN}Source files:${NC} ${BOLD}${SRC}${NC}\n"
 # Parameters:
 #   $1 (PACKING_FRACTION) - Fraction of lattice sites occupied by particles
 #   $2 (PT) - Persistence time (controls particle direction persistence)
-#   $3 (realization) - Replication number (for ensemble averaging)
+#   $3 (HT) - Healing time (controls bond regeneration)
+#   $4 (realization) - Replication number (for ensemble averaging)
 #
 # Returns:
 #   0 on success, 1 on compilation or execution failure
 run_simulation() {
     local PACKING_FRACTION=$1
     local PT=$2
-    local realization=$3
+    local HT=$3
+    local realization=$4
     local NUMBER_OF_THREADS_PER_BLOCK=1024
     
     # ========================================================================
@@ -205,35 +226,23 @@ run_simulation() {
 }
 
 # ============================================================================
-# STEP 7: Define simulation parameter sweeps
+# STEP 7: Define simulation parameters (single values)
 # ============================================================================
 NUM_REALIZATIONS=2
 
-# Persistence time values: PT = 1 to 1024 (roughly logarithmic spacing)
-PT_VALUES=(1 2 3 4 6 8 12 16 24 32 48 64 96 128 192 256 384 512 768 1024)
-
-# Packing fraction values: 0.016 to 0.256 (logarithmic spacing, doubling)
-PACKING_FRACTION_VALUES=(0.016 0.032 0.064 0.128 0.256)
-
 # ============================================================================
-# STEP 8: Calculate and display total job statistics
+# STEP 8: Calculate and display job summary
 # ============================================================================
-NUM_PT_VALUES=${#PT_VALUES[@]}
-NUM_PACK_VALUES=${#PACKING_FRACTION_VALUES[@]}
-TOTAL_ITERATIONS=$((NUM_PT_VALUES * NUM_PACK_VALUES))
-TOTAL_SIMULATIONS=$((TOTAL_ITERATIONS * NUM_REALIZATIONS))
-
 echo -e "${MAGENTA}${BOLD}============================================================================${NC}"
 echo -e "${MAGENTA}${BOLD}Simulation Configuration Summary${NC}"
 echo -e "${MAGENTA}${BOLD}============================================================================${NC}"
 echo -e "  ${CYAN}Lattice Type:${NC}           ${BOLD}${LATTICE}${NC}"
 echo -e "  ${CYAN}Lattice Size:${NC}           ${BOLD}${LX} × ${LX} = ${N} sites${NC}"
 echo -e "  ${CYAN}Healing Time (HT):${NC}       ${BOLD}${HT}${NC} (P_REGEN = 1/${HT})"
-echo -e "  ${CYAN}PT values:${NC}              ${BOLD}${NUM_PT_VALUES}${NC} values: ${PT_VALUES[@]}"
-echo -e "  ${CYAN}Packing fractions:${NC}      ${BOLD}${NUM_PACK_VALUES}${NC} values: ${PACKING_FRACTION_VALUES[@]}"
-echo -e "  ${CYAN}Iterations per realization:${NC} ${BOLD}${TOTAL_ITERATIONS}${NC} (PT × Packing)"
-echo -e "  ${CYAN}Number of realizations:${NC}  ${BOLD}${NUM_REALIZATIONS}${NC}"
-echo -e "  ${CYAN}Total simulations:${NC}       ${BOLD}${TOTAL_SIMULATIONS}${NC}"
+echo -e "  ${CYAN}Persistence Time (PT):${NC}   ${BOLD}${PT}${NC} (P_PERST = 1 - 1/${PT})"
+echo -e "  ${CYAN}Packing Fraction:${NC}       ${BOLD}${PACKING_FRACTION}${NC}"
+echo -e "  ${CYAN}Number of Realizations:${NC}  ${BOLD}${NUM_REALIZATIONS}${NC}"
+echo -e "  ${CYAN}Total Simulations:${NC}       ${BOLD}${NUM_REALIZATIONS}${NC}"
 echo -e "${MAGENTA}${BOLD}============================================================================${NC}\n"
 
 # ============================================================================
@@ -265,60 +274,34 @@ for realization in $(seq 1 $NUM_REALIZATIONS); do
     # ========================================================================
     # Initialize progress counter
     # ========================================================================
-    completed_iterations=0
     realization_start=$(date +%s)
     
     # ========================================================================
-    # STEP 10: Parameter sweep loops
+    # Execute simulation
     # ========================================================================
-    for pt in "${PT_VALUES[@]}"; do
-        for pack in "${PACKING_FRACTION_VALUES[@]}"; do
-            
-            # ==============================================================
-            # Execute simulation
-            # ==============================================================
-            run_simulation $pack $pt $realization
-            
-            if [ $? -eq 0 ]; then
-                completed_iterations=$((completed_iterations + 1))
-                total_completed=$((total_completed + 1))
-            else
-                echo -e "${RED}[SKIP]${NC} PT=${pt}, PACK=${pack}"
-                continue
-            fi
-            
-            # ==============================================================
-            # Calculate and display progress
-            # ==============================================================
-            # Calculate progress as integer percentage
-            progress_int=$((completed_iterations * 100 / TOTAL_ITERATIONS))
-            overall_progress_int=$((total_completed * 100 / TOTAL_SIMULATIONS))
-            
-            # Progress bar (visual indicator)
-            bar_length=30
-            filled=$((progress_int * bar_length / 100))
-            empty=$((bar_length - filled))
-            bar=$(printf '%*s' $filled | tr ' ' '=')$(printf '%*s' $empty | tr ' ' '-')
-            
-            # Elapsed time for this realization
-            elapsed=$(($(date +%s) - realization_start))
-            
-            echo -ne "${CYAN}[R${realization}]${NC} ${bar} ${BOLD}${progress_int}%${NC} (${completed_iterations}/${TOTAL_ITERATIONS}) | Overall: ${BOLD}${overall_progress_int}%${NC} | Time: ${elapsed}s\r"
-        done
-    done
+    run_simulation $PACKING_FRACTION $PT $HT $realization
+    
+    if [ $? -eq 0 ]; then
+        total_completed=$((total_completed + 1))
+    else
+        echo -e "${RED}[SKIP]${NC} HT=${HT}, PT=${PT}, PACK=${PACKING_FRACTION}"
+        continue
+    fi
     
     # ========================================================================
-    # STEP 11: Print realization completion summary
+    # Print realization completion summary
     # ========================================================================
     realization_end=$(($(date +%s) - realization_start))
     echo -e "\n"
     echo -e "${GREEN}[SUCCESS]${NC} Realization ${BOLD}${realization}/${NUM_REALIZATIONS}${NC} completed in ${BOLD}${realization_end}s${NC}"
+    pack_fmt=$(printf "%.6f" "$PACKING_FRACTION")
+    pt_fmt=$(printf "%.6f" "$PT")
     echo -e "  ${CYAN}Data directory:${NC} ${BOLD}${REALIZATION_DIR}/MSD_HT_${ht_fmt}/${NC}"
-    echo -e "  ${CYAN}Files generated:${NC} ${BOLD}${completed_iterations}${NC} data files\n"
+    echo -e "  ${CYAN}Output file:${NC} ${BOLD}msd_${timestamp}_L_${LX}_PACK_${pack_fmt}_PT_${pt_fmt}_HT_${ht_fmt}_R_${realization}.dat${NC}\n"
 done
 
 # ============================================================================
-# STEP 12: Final summary and statistics
+# STEP 10: Final summary and statistics
 # ============================================================================
 end_time=$(($(date +%s) - start_time))
 minutes=$((end_time / 60))
@@ -329,9 +312,8 @@ echo -e "${GREEN}${BOLD}✓ ALL SIMULATIONS COMPLETED SUCCESSFULLY${NC}"
 echo -e "${MAGENTA}${BOLD}============================================================================${NC}\n"
 
 echo -e "  ${CYAN}Total runtime:${NC}        ${BOLD}${minutes}m ${seconds}s${NC}"
-echo -e "  ${CYAN}Total simulations:${NC}    ${BOLD}${total_completed}/${TOTAL_SIMULATIONS}${NC}"
-echo -e "  ${CYAN}Success rate:${NC}        ${BOLD}$((total_completed * 100 / TOTAL_SIMULATIONS))%${NC}"
-echo -e "  ${CYAN}Output directories:${NC}   $(seq 1 $NUM_REALIZATIONS | tr '\n' ' ' | sed 's/.$//')\n"
+echo -e "  ${CYAN}Total simulations:${NC}    ${BOLD}${total_completed}/${NUM_REALIZATIONS}${NC}"
+echo -e "  ${CYAN}Success rate:${NC}        ${BOLD}$((total_completed * 100 / NUM_REALIZATIONS))%${NC}\n"
 
 echo -e "${BLUE}[INFO]${NC} Results saved in:"
 for i in $(seq 1 $NUM_REALIZATIONS); do
