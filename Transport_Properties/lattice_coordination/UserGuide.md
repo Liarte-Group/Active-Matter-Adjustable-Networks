@@ -7,7 +7,7 @@ This project intentionally recompiles the code for each parameter set. Physical 
 
 
 **Project**: Coordination Number Measurement  
-**Language**: CUDA C++  
+**Language**: CUDA-C 
 **Compiler**: NVCC (NVIDIA CUDA Compiler)  
 **Architecture**: Ampere (sm_86)  
 **Last Updated**: January 2026
