@@ -4,8 +4,8 @@ This document describes how the program is **compiled using CUDA (`nvcc`)**, inc
 
 **Project**: `./Transport_Properties/<name>/`
 **Language**: CUDA-C
-**Compiler**: NVCC (NVIDIA CUDA Compiler)  
-**Architecture**: Ampere (sm_86)  
+**Compiler**: NVCC (NVIDIA CUDA Compiler)
+**Architecture**: Ampere (sm_86)
 **Last Updated**: January 2026
 
 ⚠️ **Important:**  
