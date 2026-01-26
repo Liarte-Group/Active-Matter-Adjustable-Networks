@@ -66,15 +66,10 @@ NVCC requires a compatible C compiler:
 ```bash
 # Check GCC
 gcc --version
-
-# Check Clang
-clang --version
 ```
 
 **Recommended Versions:**
 - GCC >= 9.x
-- Clang >= 10.x
-
 ---
 
 ## 📁 Project Structure
