@@ -22,6 +22,7 @@ The repository is organized into **article-specific directories**. Each director
 ├── README.md
 ├── ACKNOWLEDGEMENTS.md
 ├── CONTRIBUTING.md
+├── USER_GUIDE.md
 ├── LICENSE
 ├── Transport_Properties/
 │   ├── lattice_coordination/
@@ -29,17 +30,16 @@ The repository is organized into **article-specific directories**. Each director
 │   ├── non_steric_interactions/
 │   └── stopping_class/
 ```
-Each study directory follows the same internal structure:
+Each study directory (project) follows the same internal structure:
 
 ```text
 ├── main.cu        # Main CUDA entry point
 ├── submit.sh      # GPU cluster submission script
-├── UserGuide.md   
 ├── src/           # CUDA source files and kernels
 └── include/       # Headers and configuration files
 
 ```
-Detailed instructions and model-specific descriptions are provided in the corresponding local ```UserGuide.md``` files.
+Detailed instructions are provided in the ```USER_GUIDE.md``` file.
 
 
 ## Scientific scope
