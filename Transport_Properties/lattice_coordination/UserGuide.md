@@ -221,11 +221,11 @@ Used to pass parameters to code without editing files:
 
 ```bash
 # Common defines in this project
--DLATTICE_TYPE=TRIANGULAR        # Network type
--DLX=512                          # Linear size
--DPACKING_FRACTION=0.128          # Packing fraction
--DP_PERST=0.8                     # Persistence probability
--DP_REGEN=0.015625                # Regeneration probability
+-DLATTICE_TYPE=TRIANGULAR          # Network type
+-DLX=512                           # Linear size
+-DPACKING_FRACTION=0.128           # Packing fraction
+-DP_PERST=0.8                      # Persistence probability
+-DP_REGEN=0.015625                 # Regeneration probability
 -DNUMBER_OF_THREADS_PER_BLOCK=1024 # Threads per block
 ```
 
