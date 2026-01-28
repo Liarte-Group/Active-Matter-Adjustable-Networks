@@ -206,64 +206,74 @@ __global__ void updateParticles(int *site, int *neighbor, int *bond, int *index,
     states[idx] = localState;
 }
 
-
+/*
+The bond regeneration step is implemented using an early-exit strategy to minimize unnecessary random number generation 
+and atomic operations, ensuring optimal GPU performance without altering the underlying stochastic dynamics
+*/
 __global__ void updateBonds(int *bond, int *neighbor, int z, curandState *bondStates) {
-    
-    // Compute global bond index: each thread handles one (site, direction) pair
+
+    // ========================================================================
+    // Compute global bond index: one thread per (site, direction)
+    // ========================================================================
     int bondIdx = blockIdx.x * blockDim.x + threadIdx.x;
 
     // ========================================================================
     // Boundary check: Exit if this thread corresponds to an invalid bond
     // ========================================================================
-    // Total bonds: N * z (all directional pairs across all sites)
+    // Total directional bonds = N * z
     if (bondIdx >= N * z) return;
 
     // ========================================================================
     // Extract site index and direction from linear bond index
     // ========================================================================
-    // Linear bond index layout:
-    //   bondIdx = z * siteIdx + direction
-    // Where: siteIdx ∈ [0, N-1], direction ∈ [0, z-1]
-    int siteIdx = bondIdx / z;           // which site
-    int dir     = bondIdx % z;           // which direction
+    // bondIdx = z * siteIdx + dir
+    int siteIdx = bondIdx / z;     // site index ∈ [0, N-1]
+    int dir     = bondIdx % z;     // direction  ∈ [0, z-1]
 
-    // Find neighbor site in this direction
+    // ========================================================================
+    // Neighbor site in this direction
+    // ========================================================================
     int neighborIdx = neighbor[z * siteIdx + dir];
 
-    // Load RNG state for this bond
+    // ========================================================================
+    // AVOID DOUBLE-COUNTING:
+    // Process each undirected bond only once
+    // ========================================================================
+    // Only threads with siteIdx < neighborIdx are responsible for updates
+    if (siteIdx >= neighborIdx) return;
+
+    // ========================================================================
+    // Skip if bond is already active
+    // ========================================================================
+    // bond == 0 → broken bond
+    // bond == 1 → active bond
+    if (bond[bondIdx] != 0) return;
+
+    // ========================================================================
+    // Load RNG state *only when needed*
+    // ========================================================================
     curandState localState = bondStates[bondIdx];
 
     // ========================================================================
-    // AVOID DOUBLE-COUNTING: Only update if local site has smaller index
+    // REGENERATION:
+    // With probability P_REGEN, activate a broken bond
     // ========================================================================
-    // Each bond is represented bidirectionally in memory:
-    //   Forward:  bond[z * siteIdx + dir]
-    //   Backward: bond[z * neighborIdx + opposite_dir]
-    // 
-    // To prevent redundant updates, only process when siteIdx < neighborIdx
-    // This ensures each bond is regenerated exactly once per MC step
-    if (siteIdx < neighborIdx) {
+    if (curand_uniform(&localState) < P_REGEN) {
+
         // ====================================================================
-        // REGENERATION: With probability P_REGEN, activate broken bonds
+        // Atomically activate both directions of the bond
         // ====================================================================
-        // bond[bondIdx] == 0 means the bond is broken/removed
-        // We regenerate it with probability P_REGEN
-        // Example: P_REGEN = 0.5 → 50% chance to regenerate each broken bond
-        if (curand_uniform(&localState) < P_REGEN && bond[bondIdx] == 0) {
-            int newState = 1;  // Regenerated state
-            
-            // Atomically update both directions of the bond
-            // Forward direction: (siteIdx, dir)
-            atomicExch(&bond[bondIdx], newState);
-            
-            // Reverse direction: (neighborIdx, opposite_dir)
-            // Opposite direction points back: (dir + z/2) % z
-            // This maintains bidirectional consistency
-            atomicExch(&bond[z * neighborIdx + (dir + z / 2) % z], newState);
-        }
+        // Forward  direction: (siteIdx, dir)
+        atomicExch(&bond[bondIdx], 1);
+
+        // Backward direction: (neighborIdx, opposite_dir)
+        // opposite_dir = (dir + z/2) mod z
+        atomicExch(&bond[z * neighborIdx + (dir + z / 2) % z], 1);
     }
 
+    // ========================================================================
     // Save updated RNG state
+    // ========================================================================
     bondStates[bondIdx] = localState;
 }
 
