@@ -11,6 +11,7 @@ This work was supported by the following projects of the São Paulo Research Fou
 We also acknowledge support from **ICTP-SAIFR**, which is supported by FAPESP Grant #2019/12345-0.
 
 **Prof. Hartmut Löwen**. acknowledges support from the German Research Foundation (DFG) within the project LO418/29-1.
+
 ---
 
 We thank **Prof. André P. Vieira** for providing continuous access to GPU cluster resources essential for the development, testing, and large-scale execution of the simulations.
