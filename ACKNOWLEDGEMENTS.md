@@ -10,6 +10,8 @@ This work was supported by the following projects of the São Paulo Research Fou
 
 We also acknowledge support from **ICTP-SAIFR**, which is supported by FAPESP Grant #2019/12345-0.
 
+---
+
 **Prof. Hartmut Löwen**. acknowledges support from the German Research Foundation (DFG) within the project LO418/29-1.
 
 ---
