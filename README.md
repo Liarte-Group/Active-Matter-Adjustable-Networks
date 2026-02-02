@@ -10,12 +10,12 @@ A CUDA-C framework for simulating **active matter on deformable and dynamically 
 ---
 
 ## Summary
-This repository provides a high-performance CUDA-C framework for simulating **active Brownian particles (ABPs)** moving on lattice-based networks that can undergo **stochastic bond breaking and regeneration**. The framework allows the study of **transport properties, particle mobility, diffusion, and dynamical heterogeneity** in dynamically remodeling networks. Its GPU-accelerated design enables simulations of very large systems, suitable for exploring complex active-matter phenomena.
+This repository provides a high-performance CUDA framework for simulating a class of active-mater models in which dynamics is explicitly coupled to the adaptative evolution of network topology. The framework allows the study of **transport properties, particle mobility, diffusion, and dynamical heterogeneity** in dynamically remodeling networks. Its GPU-accelerated design enables simulations of very large systems, suitable for exploring complex active-matter phenomena.
 
 ---
 
 ## Repository structure
-The repository is organized into **article-specific directories**. Each directory is self-contained and includes its own simulation code, CUDA kernels, and job submission scripts.
+The repository is organized into **topic-specific directories**. Each directory is self-contained and includes its own simulation code, CUDA kernels, and job submission scripts.
 
 ```text
 .
@@ -43,7 +43,7 @@ Detailed instructions are provided in the ```USER_GUIDE.md``` file.
 
 
 ## Scientific scope
-The current implementation focuses on the **transport properties** of ABPs in dynamically rearranging networks. In particular, the code allows one to investigate how stochastic network remodeling affects:
+The current implementation focuses on the **transport properties** of active particles in dynamically rearranging networks. In particular, the code allows one to investigate how stochastic network remodeling affects:
 
 - Particle mobility  
 - Diffusion properties  
@@ -85,3 +85,8 @@ If you use this code in your research, please cite:
 ## License
 This project is distributed under the terms of the **GNU General Public License v3.0 (GPL-3.0)**.
 You are free to use, modify, and distribute the software under the conditions of GPL-3.0 (see ```LICENSE``` file).
+
+---
+
+**Last Updated**: January 2026  
+**Version**: 1.0
