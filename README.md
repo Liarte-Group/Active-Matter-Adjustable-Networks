@@ -5,12 +5,12 @@
 <!-- [![Linux](https://img.shields.io/badge/OS-Linux-lightgrey.svg)](https://www.kernel.org/) --> 
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.xxxxxxx.svg)](https://doi.org/10.5281/zenodo.xxxxxxx) -->
 
-A CUDA-C framework for simulating **active matter on deformable and dynamically adjustable networks**, optimized for large-scale GPU acceleration.
+A CUDA-C framework for simulating **active matter on deformable and adjustable networks**, optimized for large-scale GPU acceleration.
 
 ---
 
 ## Summary
-This repository provides a high-performance CUDA framework for simulating a class of active-mater models in which dynamics is explicitly coupled to the adaptative evolution of network topology. The framework allows the study of **transport properties, particle mobility, diffusion, and dynamical heterogeneity** in dynamically remodeling networks. Its GPU-accelerated design enables simulations of very large systems, suitable for exploring complex active-matter phenomena.
+This repository provides a high-performance CUDA framework for simulating a class of active-mater models in which dynamics is explicitly coupled to the adaptative evolution of network topology. The current framework allows the study of **transport properties: diffusion, dynamical heterogeneity, etc.** in adjustable networks. Its GPU-accelerated design enables simulations of very large systems, suitable for exploring non-trivial phenomena in active matter.
 
 ---
 
@@ -43,15 +43,13 @@ Detailed instructions are provided in the ```USER_GUIDE.md``` file.
 
 
 ## Scientific scope
-The current implementation focuses on the **transport properties** of active particles in dynamically rearranging networks. In particular, the code allows one to investigate how stochastic network remodeling affects:
+The current implementation focuses on **transport properties** of active particles moving in adjustable networks. In particular, the code allows one to investigate how stochastic network remodeling affects:
 
 - Particle mobility  
 - Diffusion properties  
 - Dynamical heterogeneity  
 - Large-scale transport behavior
-- Network-conectivity 
-
-Planned extensions include the incorporation of **elastic and mechanical responses of the network**, as well as couplings between particle dynamics and network elasticity.
+- Network topology 
 
 ---
 
@@ -68,7 +66,7 @@ Main developer and author of the code. Responsible for the design, implementatio
 - **Hartmut Löwen**
 - **Danilo B. Liarte**
 
-Provided key scientific ideas and conceptual guidance that strongly influenced the development of the models and numerical strategies implemented in this framework.
+Provided key scientific ideas and conceptual guidance that influenced the development of the models and numerical strategies implemented in this framework.
 
 *Note:* This project's documentation (user manuals and compilation guides) was created with assistance from **Claude AI (Anthropic)**. All content has been reviewed and validated by the development team. The core simulation code, scientific methodology, and research approach are authored by **Liarte-Group**.
 
