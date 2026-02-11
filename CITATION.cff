@@ -1,0 +1,43 @@
+cff-version: 1.2.0
+title: "Transport Properties of Active Particles Moving on Adjustable Networks"
+message: "If you use this software, please cite it using the metadata below."
+type: software
+
+authors:
+  - family-names: Oropesa
+    given-names: William G. C.
+    orcid: "https://orcid.org/0000-0001-5210-1151"
+
+  - family-names: de Castro
+    given-names: P.
+    orcid: "https://orcid.org/0000-0003-3199-926X"
+
+  - family-names: Löwen
+    given-names: Hartmut
+    orcid: "https://orcid.org/0000-0001-5376-8062"
+
+  - family-names: Liarte
+    given-names: Danilo B.
+    orcid: "https://orcid.org/0000-0001-5584-7207"
+
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.18613358
+  - type: arxiv
+    value: 2602.04732
+
+repository-code: https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks
+url: https://doi.org/10.5281/zenodo.18613358
+
+license: GPL-3.0
+version: v1.0
+date-released: 2026-02-11
+
+keywords:
+  - active matter
+  - transport processes
+  - adaptive networks
+  - percolation
+  - CUDA
+  - OpenGL
+  - computational physics
