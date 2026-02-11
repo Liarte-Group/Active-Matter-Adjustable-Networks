@@ -79,7 +79,7 @@ Provided key scientific ideas and conceptual guidance that influenced the develo
 ## Citation
 If you use this code in your research, please cite:
 
- - William G. C. Oropesa *et. al.*, "Active Matter on Adjustable Networks", Zenodo, DOI: [to be assigned]
+ - William G. C. Oropesa *et. al.*, "Active Matter on Adjustable Networks", Zenodo, DOI: 10.5281/zenodo.18613358 
 
 <!-- Actualizar DOI cuando Zenodo lo genere. -->
 ---
