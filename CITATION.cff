@@ -23,8 +23,8 @@ authors:
 identifiers:
   - type: doi
     value: 10.5281/zenodo.18613358
-  - type: ArXiv
-    value: 2602.04732
+  - type: other
+    value: arXiv:2602.04732
 
 repository-code: https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks
 url: https://doi.org/10.5281/zenodo.18613358
