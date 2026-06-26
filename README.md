@@ -2,7 +2,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)](LICENSE)
 [![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.18613358-blue?style=flat-square)](https://doi.org/10.5281/zenodo.18613358)
-
+[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.18613358-blue?style=flat-square)](https://doi.org/10.5281/zenodo.18613358)
 
 
 <!-- [![CUDA](https://img.shields.io/badge/CUDA-supported-red.svg)](https://developer.nvidia.com/cuda-toolkit) --> 
