@@ -1,7 +1,9 @@
 cff-version: 1.2.0
-title: "Transport Properties of Active Particles Moving on Adjustable Networks"
 message: "If you use this software, please cite it using the metadata below."
 type: software
+title: "Transport Properties of Active Particles Moving on Adjustable Networks"
+version: v1.0
+date-released: 2026-02-11
 
 authors:
   - family-names: Oropesa
@@ -26,12 +28,10 @@ identifiers:
   - type: other
     value: arXiv:2602.04732
 
-repository-code: https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks
-url: https://doi.org/10.5281/zenodo.18613358
+repository-code: "https://github.com/Liarte-Group/Active-Matter-Adjustable-Networks"
+url: "https://doi.org/10.5281/zenodo.18613358"
 
 license: GPL-3.0
-version: v1.0
-date-released: 2026-02-11
 
 keywords:
   - active matter
@@ -39,3 +39,27 @@ keywords:
   - adaptive networks
   - CUDA
   - computational physics
+
+preferred-citation:
+  type: article
+  title: "Transport Properties of Active Particles Moving on Adjustable Networks"
+  authors:
+    - family-names: Oropesa
+      given-names: William G. C.
+      orcid: "https://orcid.org/0000-0001-5210-1151"
+    - family-names: de Castro
+      given-names: P.
+      orcid: "https://orcid.org/0000-0003-3199-926X"
+    - family-names: Löwen
+      given-names: Hartmut
+      orcid: "https://orcid.org/0000-0001-5376-8062"
+    - family-names: Liarte
+      given-names: Danilo B.
+      orcid: "https://orcid.org/0000-0001-5584-7207"
+  journal: Soft Matter
+  volume: 22
+  issue: 32
+  start: 5306
+  end: 5316
+  year: 2026
+  doi: "10.1039/D6SM00135A"
