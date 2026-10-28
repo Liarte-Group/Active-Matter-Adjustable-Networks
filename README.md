@@ -92,4 +92,4 @@ You are free to use, modify, and distribute the software under the conditions of
 ---
 
 **Last Updated**: October 2026  
-**Version**: 1.1
+**Version**: 1.0
