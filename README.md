@@ -79,7 +79,8 @@ Provided key scientific ideas and conceptual guidance that influenced the develo
 ## Citation
 If you use this code in your research, please cite:
 
- - William G. C. Oropesa *et. al.*, "Active Matter on Adjustable Networks", Zenodo, DOI: 10.5281/zenodo.18613358 
+ - William G. C. Oropesa *et. al.*, "Active Particles Moving on Adjustable Networks", Zenodo, DOI: 10.5281/zenodo.18613358
+ - William G. C. Oropesa *et. al.*, "Transport Properties of Active Particles Moving on Adjustable Networks", Soft Matter, DOI: 10.1039/d6sm00135a
 
 <!-- Actualizar DOI cuando Zenodo lo genere. -->
 ---
@@ -90,5 +91,5 @@ You are free to use, modify, and distribute the software under the conditions of
 
 ---
 
-**Last Updated**: January 2026  
-**Version**: 1.0
+**Last Updated**: October 2026  
+**Version**: 1.1
